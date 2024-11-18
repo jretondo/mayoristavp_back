@@ -1,10 +1,10 @@
 export = {
   apps: [
     {
-      name: 'P3007-club-limpieza-prod',
+      name: 'P3016-mayoristavp-prod',
       script: 'dist/api/index.js',
       env: {
-        PORT: 3007,
+        PORT: 3016,
       },
     },
   ],
