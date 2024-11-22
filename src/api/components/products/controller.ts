@@ -41,7 +41,6 @@ export = (injectedStore: typeof StoreType) => {
           { column: Columns.prodPrincipal.name, object: String(name) },
           { column: Columns.prodPrincipal.subcategory, object: String(brand) },
           { column: Columns.prodPrincipal.category, object: String(provider) },
-          { column: Columns.prodPrincipal.family, object: String(name) },
         ],
       };
       filters.push(filter);
@@ -74,10 +73,6 @@ export = (injectedStore: typeof StoreType) => {
                   column: Columns.prodPrincipal.cod_barra,
                   object: String(subItem),
                 },
-                {
-                  column: Columns.prodPrincipal.family,
-                  object: String(subItem),
-                },
               ],
             };
             filters.push(filter);
@@ -93,7 +88,9 @@ export = (injectedStore: typeof StoreType) => {
         data,
       };
     } else {
-      const groupBy: Array<string> = [Columns.prodImg.id_prod];
+      const groupBy: Array<string> = [
+        `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.id}`,
+      ];
 
       const joinQuery: IJoin = {
         table: Tables.PRODUCTS_IMG,
@@ -112,7 +109,26 @@ export = (injectedStore: typeof StoreType) => {
         };
         const data = await store.list(
           Tables.PRODUCTS_PRINCIPAL,
-          [ESelectFunct.all],
+          [
+            `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.id} as id_prod`,
+            `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.name}`,
+            `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.fecha_carga}`,
+            `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.cod_barra}`,
+            `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.short_decr}`,
+            `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.enabled}`,
+            `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.category}`,
+            `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.subcategory}`,
+            `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.unidad}`,
+            `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.precio_compra}`,
+            `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.porc_minor}`,
+            `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.iva}`,
+            `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.vta_price}`,
+            `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.vta_fija}`,
+            `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.round}`,
+            `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.id_prov}`,
+            `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.family}`,
+            `${Tables.PRODUCTS_IMG}.${Columns.prodImg.url_img}`,
+          ],
           filters,
           groupBy,
           pages,
