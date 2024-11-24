@@ -57,6 +57,8 @@ enum ProductosPrincipal {
   vta_price = 'vta_price',
   vta_fija = 'vta_fija',
   family = 'family',
+  id_prod = 'id_prod',
+  stock = 'stock',
 }
 
 enum ProductsImg {

@@ -175,11 +175,19 @@ const updateCost = (req: Request, res: Response, next: NextFunction) => {
     .catch(next);
 };
 
+const getPublicList = (req: Request, res: Response, next: NextFunction) => {
+  Controller.publicList()
+    .then((data) => {
+      success({ req, res, message: data });
+    })
+    .catch(next);
+};
+router.get('/public', getPublicList);
 router.get('/details/:id', secure(EPermissions.productos), get);
-router.get('/getCat', secure(EPermissions.productos), getCategorys);
-router.get('/family', secure(EPermissions.productos), getFamily);
+router.get('/getCat', getCategorys);
+router.get('/family', getFamily);
 router.get('/pdf', secure(EPermissions.productos), PDFList);
-router.get('/getGetSubCat', secure(EPermissions.productos), getSubCategorys);
+router.get('/getGetSubCat', getSubCategorys);
 router.get('/:page', secure(), list);
 router.put('/updateList', secure(EPermissions.productos), updateList);
 router.post('/varCost', secure(EPermissions.productos), varCost);

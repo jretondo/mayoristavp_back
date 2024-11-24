@@ -52,6 +52,8 @@ export interface INewProduct {
   vta_price: number;
   vta_fija: boolean;
   family: string;
+  stock?: number;
+  id_prod?: number;
   filesName?: Array<IObjectFiles>;
 }
 export interface INewStock {

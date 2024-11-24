@@ -12,7 +12,13 @@ import path from 'path';
 import fs from 'fs';
 import { staticFolders } from '../../../enums/EStaticFiles';
 import OptimizeImg from '../../../utils/optimeImg';
-import { IJoin, Ipages, IWhere, IWhereParams } from 'interfaces/Ifunctions';
+import {
+  IJoin,
+  Iorder,
+  Ipages,
+  IWhere,
+  IWhereParams,
+} from 'interfaces/Ifunctions';
 import { INewProduct } from 'interfaces/Irequests';
 import { IImgProd } from 'interfaces/Itables';
 
@@ -158,6 +164,96 @@ export = (injectedStore: typeof StoreType) => {
         };
       }
     }
+  };
+
+  const publicList = async () => {
+    const order: Iorder = {
+      columns: [Columns.prodPrincipal.subcategory, Columns.prodPrincipal.name],
+      asc: true,
+    };
+    const joinQuery: IJoin = {
+      table: Tables.STOCK,
+      colJoin: Columns.stock.id_prod,
+      colOrigin: Columns.prodPrincipal.id,
+      type: ETypesJoin.left,
+    };
+    const groupBy: Array<string> = [
+      `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.id}`,
+      Columns.prodPrincipal.subcategory,
+    ];
+    const lista: Array<INewProduct> = await store.list(
+      Tables.PRODUCTS_PRINCIPAL,
+      ['*', `SUM(${Columns.stock.cant}) as stock`],
+      undefined,
+      groupBy,
+      undefined,
+      joinQuery,
+      order,
+    );
+    return new Promise((resolve, reject) => {
+      let products: Array<any> = [];
+      lista.map(async (item, key) => {
+        const sku = item.cod_barra;
+        const name = item.name;
+        let filter2: IWhereParams | undefined = undefined;
+        let filters2: Array<IWhereParams> = [];
+        let stock = item.stock;
+        if (!item.stock || item.stock < 0) {
+          stock = 0;
+        }
+        filter2 = {
+          mode: EModeWhere.strict,
+          concat: EConcatWhere.none,
+          items: [
+            { column: Columns.prodImg.id_prod, object: String(item.id_prod) },
+          ],
+        };
+
+        filters2.push(filter2);
+
+        const cat = item.category;
+        const subCat = item.subcategory;
+        const category = [subCat];
+        const saleCount = 100;
+        const nuevo = false;
+        const discount = 0;
+
+        const prices: Array<any> = [
+          {
+            type_price_name: 'MINORISTA',
+            sell_price: item.vta_price,
+            min: 0,
+          },
+        ];
+
+        const groupBy2: Array<string> = [Columns.prodImg.url_img];
+        const shortDescription = item.short_descr;
+        const image = await store.list(
+          Tables.PRODUCTS_IMG,
+          ['*'],
+          filters2,
+          groupBy2,
+        );
+        products.push({
+          id: item.id_prod,
+          sku,
+          name,
+          category,
+          saleCount,
+          nuevo,
+          discount,
+          shortDescription,
+          image,
+          prices,
+          stock,
+        });
+        if (key === lista.length - 1) {
+          resolve({
+            products,
+          });
+        }
+      });
+    });
   };
 
   const upsert = async (body: INewProduct, listImgDelete?: Array<string>) => {
@@ -787,5 +883,6 @@ export = (injectedStore: typeof StoreType) => {
     printPDF,
     updateList,
     getFamily,
+    publicList,
   };
 };
