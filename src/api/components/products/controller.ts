@@ -204,9 +204,7 @@ export = (injectedStore: typeof StoreType) => {
         filter2 = {
           mode: EModeWhere.strict,
           concat: EConcatWhere.none,
-          items: [
-            { column: Columns.prodImg.id_prod, object: String(item.id_prod) },
-          ],
+          items: [{ column: Columns.prodImg.id_prod, object: String(item.id) }],
         };
 
         filters2.push(filter2);
