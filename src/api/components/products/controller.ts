@@ -183,7 +183,11 @@ export = (injectedStore: typeof StoreType) => {
     ];
     const lista: Array<INewProduct> = await store.list(
       Tables.PRODUCTS_PRINCIPAL,
-      ['*', `SUM(${Columns.stock.cant}) as stock`],
+      [
+        '*',
+        `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.id} as id_prod`,
+        `SUM(${Columns.stock.cant}) as stock`,
+      ],
       undefined,
       groupBy,
       undefined,
@@ -201,10 +205,13 @@ export = (injectedStore: typeof StoreType) => {
         if (!item.stock || item.stock < 0) {
           stock = 0;
         }
+
         filter2 = {
           mode: EModeWhere.strict,
           concat: EConcatWhere.none,
-          items: [{ column: Columns.prodImg.id_prod, object: String(item.id) }],
+          items: [
+            { column: Columns.prodImg.id_prod, object: String(item.id_prod) },
+          ],
         };
 
         filters2.push(filter2);
