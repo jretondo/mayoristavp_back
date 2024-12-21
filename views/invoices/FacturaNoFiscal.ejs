@@ -1,3 +1,4 @@
+<% function formatoPrecio(precio) { return precio.toLocaleString('es-AR', { style: 'currency' , currency: 'ARS' }); } %>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -13,10 +14,16 @@
       <div id="logo">
         <img src="<%- logo %> ">
         <h2 class="name">
-          Mayorista de Limpieza VP
+          Mayorista en Limpieza
         </h2>
         <div>
+          VP. Representaciones
+        </div>
+        <div>
           Chavisacate 2062, Bº Talleres Oeste
+        </div>
+        <div>
+          Tel.: 3512655464
         </div>
       </div>
       <div style="position: absolute;text-align: center;width: 100%;">
@@ -88,7 +95,7 @@
                       <div class="to">Forma de Pago:</div>
                       <% variosPagos.forEach(function(item){ %>
                         <h2 class="name">
-                          <%- item.tipo_txt %>: $ <%- item.importe %>
+                          <%- item.tipo_txt %>: <%- formatoPrecio(item.importe) %>
                         </h2>
                         <% }); %>
                           <% }else{ %>
@@ -124,10 +131,10 @@
       <table border="0" cellspacing="0" cellpadding="0">
         <thead>
           <tr>
-            <th style="border: 1px solid white;" class="total">SUB-TOTAL: $<%- subTotalNoFiscal %>
+            <th style="border: 1px solid white;" class="total">SUB-TOTAL: <%- formatoPrecio(subTotalNoFiscal) %>
             </th>
             <th style="border: 1px solid white;" class="total">
-              DESC.: $<%- totalDesc %>
+              DESC.: <%- formatoPrecio(totalDesc) %>
             </th>
             <th style="border: 1px solid white;" class="total" style="font-size: 1.2em;font-weight: bold;">TOTAL: $<%-
                 totalFact %>

@@ -1,22 +1,16 @@
+<% function formatoPrecio(precio) { return precio.toLocaleString('es-AR', {
+style: 'currency' , currency: 'ARS' }); } %>
 <tr>
-  <td class="no">
-    <%- itemCant %>
-      <% if(tipoUn===0){ %>
-        Un.
-        <% }else if(tipoUn===1){ %>
-          Kg.
-          <% }else if(tipoUn===2){ %>
-            Lts.
-            <% } %>
+  <td class="qty" style="text-align: center">
+    <%- itemCant %> <% if(tipoUn===0){ %> Un. <% }else if(tipoUn===1){ %> Kg. <%
+    }else if(tipoUn===2){ %> Lts. <% } %>
   </td>
-  <td class="desc">
-    <h3>
-      <%- itemName %>
-    </h3>
-  </td>
-  <td class="qty">$<%- itemPrice %>
+  <td class="qty" style="text-align: left"><%- itemName %></td>
+  <td class="qty" style="text-align: right; padding-right: 30px">
+    <%- formatoPrecio(itemPrice) %>
   </td>
 
-  <td class="total">$<%- itemTotal %>
+  <td class="qty" style="text-align: right; padding-right: 70px">
+    <%- formatoPrecio(itemTotal) %>
   </td>
 </tr>
