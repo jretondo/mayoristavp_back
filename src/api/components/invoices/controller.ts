@@ -748,7 +748,7 @@ export = (injectedStore: typeof StoreType) => {
         descuento,
         cliente,
         codigoSeis,
-        'foy15.95@gmail.com',
+        'jretondo90@gmail.com',
         'Código de aprobación de descuento',
         false,
       );

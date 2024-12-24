@@ -4,7 +4,7 @@
 
 <head>
   <meta charset="utf-8">
-  <title>Factura</title>
+  <title>FACTURA</title>
   <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro' rel='stylesheet' type='text/css'>
 </head>
 
@@ -14,42 +14,42 @@
       <div id="logo">
         <img src="<%- logo %> ">
         <h2 class="name">
-          Mayorista en Limpieza
+          MAYORISTA EN LIMPIEZA
         </h2>
         <div>
-          VP. Representaciones
+          VP. REPRESENTACIONES
         </div>
         <div>
-          Chavisacate 2062, Bº Talleres Oeste
+          CHAVISACATE 2062, Bº TALLERES OESTE
         </div>
         <div>
-          Tel.: 3512655464
+          TEL.: 3512655464
         </div>
       </div>
       <div style="position: absolute;text-align: center;width: 100%;">
-        <h2 class="name" style="font-weight: bold;">ORIGINAL</h2>
+        <h2 class="name">ORIGINAL</h2>
         <div
           style="width: 80px;height: 80px;background: #80808061;margin: auto;border: 4px solid black;margin-top: 20px;">
           <h1 style="margin-top: 5px;margin-bottom: 5px;font-size: 35px;">
             X
           </h1>
-          <span>No Fiscal</span>
+          <span>NO FISCAL</span>
         </div>
       </div>
       <div id="company" style="margin-top: 21px;text-align: left;">
-        <h2 class="name" style="margin-bottom: 10px;">FACTURA Nº: <span style="font-weight: bold;">
+        <h2 class="name" style="margin-bottom: 10px;">FACTURA Nº: <span >
             <%- factNro %>
           </span></h2>
-        <h2 class="name" style="margin-bottom: 10px;">FECHA: <span style="font-weight: bold;">
+        <h2 class="name" style="margin-bottom: 10px;">FECHA: <span >
             <%- fechaFact %>
           </span></h2>
-        <div style="margin-bottom: 7px;">CUIT: <span style="font-weight: bold;">
+        <div style="margin-bottom: 7px;">CUIT: <span >
             <%- cuitOrigen %>
           </span></div>
-        <div style="margin-bottom: 7px;">IIBB: <span style="font-weight: bold;">
+        <div style="margin-bottom: 7px;">IIBB: <span >
             <%- iibbOrigen %>
           </span></div>
-        <div style="margin-bottom: 7px;">Inicio de act.: <span style="font-weight: bold;">
+        <div style="margin-bottom: 7px;">INICIO ACT.: <span >
             <%- iniAct %>
           </span></div>
       </div>
@@ -60,7 +60,7 @@
       <div id="details" class="clearfix">
         <% if(clienteNro===99999999){ %>
           <div id="client">
-            <div class="to">Consumidor Final</div>
+            <div class="to">CONSUMIDOR FINAL</div>
             <div class="email"><a href="mailto:<%- clienteEmail %> ">
                 <%- clienteEmail %>
               </a></div>
@@ -92,14 +92,14 @@
                   </h2>
                   <% }else{ %>
                     <% if(parseInt(formaPago.code)===5){ %>
-                      <div class="to">Forma de Pago:</div>
+                      <div class="to">FORMA DE PAGO:</div>
                       <% variosPagos.forEach(function(item){ %>
                         <h2 class="name">
                           <%- item.tipo_txt %>: <%- formatoPrecio(item.importe) %>
                         </h2>
                         <% }); %>
                           <% }else{ %>
-                            <div class="to">Forma de Pago:</div>
+                            <div class="to">FORMA DE PAGO:</div>
                             <h2 class="name">
                               <%- formaPago.string %>
                             </h2>
@@ -111,10 +111,10 @@
       <table border="0" cellspacing="0" cellpadding="0">
         <thead>
           <tr>
-            <th class="no">CANT.</th>
-            <th class="desc">DESCRIPCION</th>
-            <th class="qty">PRECIO UNIT.</th>
-            <th class="total">TOTAL</th>
+            <th class="unit" style="text-align: right">CANT.</th>
+            <th class="unit" style="text-align: left;">DESCRIPCION</th>
+            <th class="unit" style="text-align: right;">PRECIO UNIT.</th>
+            <th class="unit" style="text-align: right;">TOTAL</th>
           </tr>
         </thead>
         <tbody>
@@ -136,27 +136,27 @@
             <th style="border: 1px solid white;" class="total">
               DESC.: <%- formatoPrecio(totalDesc) %>
             </th>
-            <th style="border: 1px solid white;" class="total" style="font-size: 1.2em;font-weight: bold;">TOTAL: $<%-
+            <th style="border: 1px solid white;" class="total" style="font-size: 1.2em;">TOTAL: $<%-
                 totalFact %>
             </th>
           </tr>
         </thead>
       </table>
-      <div style="width: 100%;border-top: 2px solid #aaaaaa;margin-top: 10px;margin-bottom: 10px;"></div>
+      <div style="width: 100%;border-top: 2px solid #AAAAAA;margin-top: 10px;margin-bottom: 10px;"></div>
 
       <div style="width: 40%">
         <div style="position: absolute;left: 0%;">
-          <h3 style="margin-top: 5px;margin-bottom: 5px">
-            Vendedor:
-          </h3>
-          <h3 style="margin-top: 5px;margin-bottom: 5px">
+          <span style="margin-top: 5px;margin-bottom: 5px;font-size: 13px;">
+            VENDEDOR:
+          </span>
+          <span style="margin-top: 5px;margin-bottom: 5px;font-size: 13px;">
             <%- vendedor %>
-          </h3>
+          </span>
         </div>
       </div>
       <div style="width: 50%;position: absolute;right: 0;text-align: left;">
-        <h3 style="margin-top: 5px; margin-bottom: 5px;text-align: right;">NO VÁLIDO COMO COMPROBANTE FISCAL
-        </h3>
+        <span style="margin-top: 5px; margin-bottom: 5px;text-align: right;font-size: 13px;">NO VÁLIDO COMO COMPROBANTE FISCAL
+        </span>
       </div>
       </div>
       </div>

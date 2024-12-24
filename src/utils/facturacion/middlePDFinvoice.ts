@@ -190,7 +190,7 @@ export const invoicePDFMiddle = () => {
         clienteName: newFact.raz_soc_cliente || 'Consumidor Final',
         clienteNro: newFact.n_doc_cliente || '',
         tipoDoc: newFact.tipo_doc_cliente === 80 ? 'CUIT' : 'DNI',
-        condIvaCliente: condIvaStrCliente,
+        condIvaCliente: condIvaStrCliente.toUpperCase(),
       };
 
       const totales = {
