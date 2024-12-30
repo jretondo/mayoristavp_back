@@ -39,10 +39,7 @@ export = (injectedStore: typeof StoreType) => {
     filter = {
       mode: EModeWhere.strict,
       concat: EConcatWhere.and,
-      items: [
-        { column: Columns.stock.id_prod, object: String(idProd) },
-        { column: Columns.stock.pv_id, object: String(idPv) },
-      ],
+      items: [{ column: Columns.stock.id_prod, object: String(idProd) }],
     };
     filters.push(filter);
     const nuevo = await store.list(
