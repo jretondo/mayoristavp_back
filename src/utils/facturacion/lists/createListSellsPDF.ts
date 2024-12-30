@@ -25,6 +25,7 @@ export const createListSellsPDF = async (
   data: Array<IFactura>,
 ) => {
   return new Promise(async (resolve, reject) => {
+    const tottalesFiltrados = totales.filter((total) => total.SUMA !== 0);
     function base64_encode(file: any) {
       // read binary data
       var bitmap: Buffer = fs.readFileSync(file);
@@ -46,7 +47,7 @@ export const createListSellsPDF = async (
     const dataPV = await ControllerPtoVta.get(ptoVtaId);
     const dataUser = await ControllerUsers.getUser(userId);
 
-    const fileName = `${dataPV[0].raz_soc} (${dataPV[0].cuit}) - ${dataUser[0].nombre} ${dataUser[0].apellido} desde ${desde} al ${hasta}.pdf`;
+    const fileName = `Caja - desde ${desde} al ${hasta}.pdf`;
     const location = path.join('public', 'caja-lists', fileName);
 
     const totaleslista: Array<{
@@ -83,10 +84,22 @@ export const createListSellsPDF = async (
         typeNumber: 4,
         typeStr: 'Cuenta Corriente',
       },
+      {
+        typeNumber: 5,
+        typeStr: 'Varios Metodos',
+      },
+      {
+        typeNumber: 6,
+        typeStr: 'Cheque',
+      },
+      {
+        typeNumber: 7,
+        typeStr: 'Transferencia',
+      },
     ];
 
     metodos.map((metodo, key) => {
-      const tot1Filtr1 = totales
+      const tot1Filtr1 = tottalesFiltrados
         .filter(
           (total) => Number(total.forma_pago) === Number(metodo.typeNumber),
         )
@@ -98,10 +111,11 @@ export const createListSellsPDF = async (
       const totalTipo =
         (tot1Filtr1.length > 0 ? tot1Filtr1[0].SUMA : 0) +
         (tot1Filtr2.length > 0 ? tot1Filtr2[0].SUMA : 0);
-      totaleslista.push({
-        tipoStr: metodo.typeStr,
-        totalStr: String(formatMoney(totalTipo)),
-      });
+      totalTipo > 0 &&
+        totaleslista.push({
+          tipoStr: metodo.typeStr,
+          totalStr: String(formatMoney(totalTipo)),
+        });
     });
 
     for (let i = 0; i < data.length; i++) {
@@ -141,6 +155,12 @@ export const createListSellsPDF = async (
         case 5:
           formaPagoStr = 'Varios Metodos';
           break;
+        case 6:
+          formaPagoStr = 'Cheque';
+          break;
+        case 7:
+          formaPagoStr = 'Transferencia';
+          break;
         default:
           formaPagoStr = 'Efectivo';
           break;
@@ -158,11 +178,16 @@ export const createListSellsPDF = async (
     const datos = {
       logo: 'data:image/png;base64,' + logo,
       style: '<style>' + estilo + '</style>',
-      ptoVtaStr: `(P.V.: ${dataPV[0].pv}) ${dataPV[0].direccion}`,
-      usuarioStr: `(Usuario: ${dataUser[0].usuario}) ${dataUser[0].nombre} ${dataUser[0].apellido}`,
+      ptoVtaStr: dataPV.length
+        ? `(P.V.: ${dataPV[0].pv}) ${dataPV[0].direccion}`
+        : 'Todos los puntos de venta',
+      usuarioStr:
+        dataUser.length > 0
+          ? `(Usuario: ${dataUser[0].usuario}) ${dataUser[0].nombre} ${dataUser[0].apellido}`
+          : 'Todos los usuarios',
       desdeStr: desdeStr,
       hastaStr: hastaStr,
-      totaleslista: totaleslista,
+      totaleslista: totaleslista.filter((total) => total.totalStr !== '0.00'),
       listaVtas: listaVtas,
     };
 

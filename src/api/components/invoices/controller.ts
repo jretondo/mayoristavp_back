@@ -122,7 +122,7 @@ export = (injectedStore: typeof StoreType) => {
   const cajaList = async (
     pdf: boolean,
     userId: number,
-    ptoVtaId: number,
+    ptoVtaId: number | undefined,
     desde: string,
     hasta: string,
     page?: number,
@@ -139,7 +139,7 @@ export = (injectedStore: typeof StoreType) => {
       },
     ];
 
-    if (!userId) {
+    if (!userId && ptoVtaId) {
       filters = [
         {
           mode: EModeWhere.strict,
@@ -147,6 +147,10 @@ export = (injectedStore: typeof StoreType) => {
           items: [{ column: Columns.facturas.pv_id, object: String(ptoVtaId) }],
         },
       ];
+    }
+
+    if (!userId && !ptoVtaId) {
+      filters = [];
     }
 
     const filter1: IWhereParams = {
@@ -262,7 +266,7 @@ export = (injectedStore: typeof StoreType) => {
       if (pdf) {
         const cajaList: any = await createListSellsPDF(
           userId,
-          ptoVtaId,
+          ptoVtaId || 0,
           desde,
           hasta,
           totales,
