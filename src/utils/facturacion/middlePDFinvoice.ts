@@ -28,6 +28,7 @@ export const invoicePDFMiddle = () => {
   ) => {
     try {
       const pvData: INewPV = req.body.pvData;
+      const noPrice: boolean = Boolean(req.query.noPrice);
       const newFact: IFactura = req.body.newFact;
       const productsList: Array<IDetFactura> = req.body.productsList;
       const variosPagos = req.body.variosPagos;
@@ -228,6 +229,12 @@ export const invoicePDFMiddle = () => {
         case 4:
           formapagoStr = 'CUENTA CORRIENTE';
           break;
+        case 6:
+          formapagoStr = 'CHEQUE';
+          break;
+        case 7:
+          formapagoStr = 'TRANSFERENCIA';
+          break;
         default:
           formapagoStr = 'OTROS';
           break;
@@ -254,7 +261,11 @@ export const invoicePDFMiddle = () => {
 
       let ejsPath = 'Factura.ejs';
       if (!newFact.fiscal) {
-        ejsPath = 'FacturaNoFiscal.ejs';
+        if (noPrice) {
+          ejsPath = 'FacturaNoFiscalNoPrice.ejs';
+        } else {
+          ejsPath = 'FacturaNoFiscal.ejs';
+        }
       }
 
       ejs.renderFile(
