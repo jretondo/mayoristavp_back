@@ -543,6 +543,7 @@ export = (injectedStore: typeof StoreType) => {
           telefono: '',
           email: newFact.email_cliente,
           cond_iva: newFact.cond_iva_cliente,
+          direccion: '',
         };
         try {
           await ControllerClientes.upsert(newClient, next);

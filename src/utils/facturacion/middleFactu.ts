@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { INewFactura, INewProduct, INewPV } from 'interfaces/Irequests';
-import { IDetFactura, IFactura, IUser } from 'interfaces/Itables';
+import { IClientes, IDetFactura, IFactura, IUser } from 'interfaces/Itables';
 import ptosVtaController from '../../api/components/ptosVta';
 import prodController from '../../api/components/products';
 import {
@@ -15,6 +15,7 @@ import {
 import moment from 'moment';
 import errorSend from '../error';
 import { roundNumber } from '../../utils/roundNumb';
+import clientesController from '../../api/components/clientes';
 
 const factuMiddel = () => {
   const middleware = async (
@@ -91,6 +92,11 @@ const factuMiddel = () => {
         productsList.totalNeto =
           productsList.totalNeto - productsList.totalNeto * (descuento / 100);
       }
+      let clienteData: IClientes[] = [];
+      if (body.cliente_ndoc && body.cliente_ndoc.length > 5) {
+        clienteData = (await clientesController.list(1, body.cliente_ndoc, 1))
+          .data;
+      }
 
       const newFact: IFactura = {
         fecha: body.fecha,
@@ -128,6 +134,9 @@ const factuMiddel = () => {
         pv_id: body.pv_id,
         id_fact_asoc: 0,
         descuento: descuentoNumber,
+        direccion_entrega:
+          (clienteData.length > 0 && clienteData[0].direccion) || '',
+        telefono: (clienteData.length > 0 && clienteData[0].telefono) || '',
       };
 
       let ivaList: Array<IIvaItem> = [];
@@ -140,7 +149,6 @@ const factuMiddel = () => {
 
       if (body.fiscal) {
         ivaList = await listaIva(productsList.listaProd, descuentoPer);
-        console.log('ivaList :>> ', ivaList);
         dataFiscal = {
           CantReg: 1,
           PtoVta: pvData[0].pv,
