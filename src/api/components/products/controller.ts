@@ -425,6 +425,7 @@ export = (injectedStore: typeof StoreType) => {
     let filters: Array<IWhereParams> = [];
     let conID = false;
     let idProd = 0;
+    console.log('item :>> ', item);
     if (advanced) {
       filter = {
         mode: EModeWhere.like,
@@ -477,30 +478,18 @@ export = (injectedStore: typeof StoreType) => {
         }
       }
     }
-    if (conID) {
-      let data = await store.get(Tables.PRODUCTS_PRINCIPAL, idProd);
-      data[0].id_prod = data[0].id;
-      return {
-        data,
-      };
-    } else {
-      const joinQuery: IJoin = {
-        table: Tables.PRODUCTS_IMG,
-        colJoin: Columns.prodImg.id_prod,
-        colOrigin: Columns.prodPrincipal.id,
-        type: ETypesJoin.left,
-      };
-      const data = await store.list(
-        Tables.PRODUCTS_PRINCIPAL,
-        [ESelectFunct.all],
-        filters,
-        undefined,
-        undefined,
-        joinQuery,
-      );
-      const prodList = await createProdListPDF(data);
-      return prodList;
-    }
+    const data = await store.list(
+      Tables.PRODUCTS_PRINCIPAL,
+      [ESelectFunct.all],
+      filters,
+      undefined,
+      undefined,
+      undefined,
+    );
+    // console.log('data :>> ', data);
+    console.log('filters :>> ', filters);
+    const prodList = await createProdListPDF(data);
+    return prodList;
   };
 
   const getCategory = async () => {

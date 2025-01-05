@@ -31,9 +31,9 @@ const list = (req: Request, res: Response, next: NextFunction) => {
 
 const PDFList = (req: Request, res: Response, next: NextFunction) => {
   Controller.printPDF(
-    String(req.query.query),
+    req.query.query ? String(req.query.query) : undefined,
     Boolean(req.query.advanced),
-    String(req.query.name),
+    req.query.name ? String(req.query.name) : undefined,
     String(req.query.provider),
     String(req.query.brand),
   )

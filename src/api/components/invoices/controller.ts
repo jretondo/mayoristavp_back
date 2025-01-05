@@ -153,6 +153,16 @@ export = (injectedStore: typeof StoreType) => {
       filters = [];
     }
 
+    if (!ptoVtaId && userId) {
+      filters = [
+        {
+          mode: EModeWhere.strict,
+          concat: EConcatWhere.and,
+          items: [{ column: Columns.facturas.user_id, object: String(userId) }],
+        },
+      ];
+    }
+
     const filter1: IWhereParams = {
       mode: EModeWhere.higherEqual,
       concat: EConcatWhere.none,
