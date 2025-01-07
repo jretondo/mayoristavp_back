@@ -196,6 +196,15 @@ enum CodigosAprobacion {
   vencimiento = 'vencimiento',
 }
 
+enum HeroSlider {
+  id = 'id',
+  tittle = 'tittle',
+  subtitle = 'subtitle',
+  image = 'image',
+  url = 'url',
+  active = 'active',
+}
+
 export enum MetodosPago {
   efectivo = 0,
   mercaPago = 1,
@@ -224,6 +233,7 @@ export enum Tables {
   CTA_CTE = 'cta_cte',
   FORMAS_PAGO = 'formas_pago',
   CODIGOS_APROBACION = 'codigo_aprobacion',
+  HERO_SLIDER = 'hero_slider',
 }
 
 export const Columns = {
@@ -243,4 +253,5 @@ export const Columns = {
   ctaCte: CtaCte,
   formasPago: FormasPago,
   codigosAprobacion: CodigosAprobacion,
+  heroSlider: HeroSlider,
 };

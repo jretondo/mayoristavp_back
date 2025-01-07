@@ -151,3 +151,14 @@ export interface ICodigoAprobacion {
   fecha: Date;
   vencimiento: Date;
 }
+
+export interface IHeroSlider {
+  id?: number;
+  title: string;
+  subtitle: string;
+  image: string;
+  url: string;
+  active: boolean;
+  type: boolean;
+  filesName?: Express.Multer.File[];
+}
