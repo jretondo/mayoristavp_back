@@ -215,6 +215,7 @@ export = (injectedStore: typeof StoreType) => {
         undefined,
         joinQuery,
       );
+      console.log('totales2 :>> ', totales2);
       const data = await store.list(
         Tables.FACTURAS,
         [ESelectFunct.all],

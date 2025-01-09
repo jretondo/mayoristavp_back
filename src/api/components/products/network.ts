@@ -11,7 +11,7 @@ import { staticFolders } from '../../../enums/EStaticFiles';
 const list = (req: Request, res: Response, next: NextFunction) => {
   Controller.list(
     Number(req.params.page),
-    String(req.query.query),
+    req.query.query ? String(req.query.query) : undefined,
     Number(req.query.cantPerPage),
     Boolean(req.query.advanced),
     String(req.query.name),
@@ -182,6 +182,7 @@ const getPublicList = (req: Request, res: Response, next: NextFunction) => {
     })
     .catch(next);
 };
+router.get('/', secure(EPermissions.productos), list);
 router.get('/public', getPublicList);
 router.get('/details/:id', secure(EPermissions.productos), get);
 router.get('/getCat', getCategorys);
