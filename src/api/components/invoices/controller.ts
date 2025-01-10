@@ -1,7 +1,6 @@
 import { Iorder } from './../../../interfaces/Ifunctions';
 import { ETypesJoin } from '../../../enums/EfunctMysql';
 import { MetodosPago } from './../../../enums/EtablesDB';
-import { sendAvisoFact } from './../../../utils/sendEmails/sendAvisoFact';
 import { IFormasPago, IMovCtaCte } from './../../../interfaces/Itables';
 import { createListSellsPDF } from './../../../utils/facturacion/lists/createListSellsPDF';
 import {
@@ -22,7 +21,6 @@ import ControllerClientes from '../clientes';
 import fs from 'fs';
 import { NextFunction } from 'express';
 import controller from '../clientes';
-import { zfill } from '../../../utils/cerosIzq';
 import { sendCode } from '../../../utils/sendEmails/sendCode';
 import moment from 'moment';
 
@@ -368,11 +366,13 @@ export = (injectedStore: typeof StoreType) => {
         headers: headers,
         rows: await rows,
       });
+
       const resultInsertStock = await ControllerStock.multipleInsertStock(
         newDetFact,
         newFact.user_id,
         pvId,
         factId,
+        newFact.nota_cred,
       );
       return {
         status: 200,

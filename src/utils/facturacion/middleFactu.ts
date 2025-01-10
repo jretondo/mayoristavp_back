@@ -111,7 +111,7 @@ const factuMiddel = () => {
           : 99,
         n_doc_cliente: body.cliente_id ? Number(clienteData[0].ndoc) : 0,
         cond_iva_cliente: body.cliente_id ? clienteData[0].cond_iva : 0,
-        email_cliente: body.cliente_email || '',
+        email_cliente: body.enviar_email ? body.cliente_email || '' : '',
         nota_cred: false,
         fiscal: body.fiscal,
         raz_soc_cliente: body.cliente_id ? clienteData[0].razsoc : '',

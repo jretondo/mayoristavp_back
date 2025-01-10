@@ -137,6 +137,7 @@ export = (injectedStore: typeof StoreType) => {
     userId: number,
     pvId: number,
     factId: number,
+    nota_credito?: boolean,
   ) => {
     const headers: Array<string> = [
       Columns.stock.fecha,
@@ -170,17 +171,17 @@ export = (injectedStore: typeof StoreType) => {
         values.push(moment(new Date()).format('YYYY-MM-DD HH:mm:ss'));
         values.push(item.id_prod);
         values.push(pvId);
-        values.push(-item.cant_prod);
+        values.push(nota_credito ? item.cant_prod : -item.cant_prod);
         values.push(1);
         values.push('Venta Stock');
         values.push(0);
         values.push(item.alicuota_id);
         values.push(userId);
         values.push(factId);
-        values.push(prodData[0].name);
+        values.push(prodData.length ? prodData[0].name : item.nombre_prod);
         values.push(`${pvData[0].direccion} (PV: ${pvData[0].pv})`);
-        values.push(prodData[0].category);
-        values.push(prodData[0].subcategory);
+        values.push(prodData.length ? prodData[0].category : '');
+        values.push(prodData.length ? prodData[0].subcategory : '');
         rowsvalues.push(values);
         if (key === prodList.length - 1) {
           resolve(rowsvalues);
