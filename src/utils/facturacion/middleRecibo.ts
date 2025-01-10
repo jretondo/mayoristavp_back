@@ -39,8 +39,6 @@ const paymentMiddle = () => {
         filters,
       );
       const lastNumber = getHighterNum[0].last;
-      console.log('lastNumber :>> ', lastNumber);
-      console.log('getHighterNum :>> ', getHighterNum);
       let cbte = 0;
       if (lastNumber > 0) {
         cbte = lastNumber;
@@ -82,6 +80,8 @@ const paymentMiddle = () => {
         det_rbo: detalle,
         direccion_entrega: clienteData[0].direccion || '',
         telefono: clienteData[0].telefono || '',
+        localidad: clienteData[0].localidad || '',
+        provincia: clienteData[0].provincia || '',
       };
 
       req.body.newFact = newFact;

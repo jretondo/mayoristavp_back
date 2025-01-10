@@ -194,6 +194,8 @@ export const invoicePDFMiddle = () => {
         condIvaCliente: condIvaStrCliente.toUpperCase(),
         direccionCliente: newFact.direccion_entrega || '',
         telefonoCliente: newFact.telefono || '',
+        localidadCliente: newFact.localidad || '',
+        provinciaCliente: newFact.provincia || '',
       };
 
       const totales = {
@@ -254,6 +256,7 @@ export const invoicePDFMiddle = () => {
         cbteAsoc,
         formaPago,
         variosPagos,
+        noPrice,
         ...encabezado,
         ...ptoVta,
         ...cliente,
@@ -263,11 +266,7 @@ export const invoicePDFMiddle = () => {
 
       let ejsPath = 'Factura.ejs';
       if (!newFact.fiscal) {
-        if (noPrice) {
-          ejsPath = 'FacturaNoFiscalNoPrice.ejs';
-        } else {
-          ejsPath = 'FacturaNoFiscal.ejs';
-        }
+        ejsPath = 'FacturaNoFiscal.ejs';
       }
 
       ejs.renderFile(
@@ -291,6 +290,12 @@ export const invoicePDFMiddle = () => {
               process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
           });
           const page = await browser.newPage();
+          // guardar el html en un archivo
+          fs.writeFileSync(
+            path.join('public', 'invoices', 'temp.html'),
+            data,
+            'utf8',
+          );
           await page.setContent(data, { waitUntil: 'networkidle0' });
           await page.pdf({
             path: filePath,

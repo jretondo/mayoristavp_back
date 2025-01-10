@@ -193,6 +193,8 @@ const factuMiddelDevPart = () => {
         descuento: -descuentoNumber,
         direccion_entrega: '',
         telefono: '',
+        localidad: '',
+        provincia: '',
       };
 
       let newDet: Array<IDetFactura> = [];

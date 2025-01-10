@@ -1,4 +1,5 @@
 <% function formatoPrecio(precio) { return precio.toLocaleString('es-AR', { style: 'currency' , currency: 'ARS' }); } %>
+<% function upperCase(str){return str.toUpperCase()} %>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -62,30 +63,39 @@
           <div id="client">
             <div class="to">CONSUMIDOR FINAL</div>
             <div class="email"><a href="mailto:<%- clienteEmail %> ">
-                <%- clienteEmail %>
+                <%- upperCase(clienteEmail) %>
               </a></div>
           </div>
           <% }else { %>
             <div id="client">
               <div class="to">CLIENTE:</div>
               <h2 class="name">
-                <%- clienteName %>
+                <%- upperCase(clienteName) %>
               </h2>
               <h2 class="name">
-                <%- condIvaCliente %>
+                <%- upperCase(condIvaCliente) %>
               </h2>
               <h2 class="name">
                 <%- tipoDoc %> : <%- clienteNro %>
               </h2>
               <div class="email"><a href="mailto:<%- clienteEmail %> ">
-                  <%- clienteEmail %>
-                </a></div>
+                  <%- upperCase(clienteEmail) %>
+                </a></div>                
+            </div>
+            <div id="shipping">
+              <div class="to">ENTREGA:</div>            
                 <h2 class="name">
-                  Dirección de Entrega: <%- direccionCliente %>
+                  <%- upperCase(direccionCliente) %>
+                </h2>               
+                <h2 class="name">
+                  <%- upperCase(localidadCliente) %>
+                </h2>
+               <h2 class="name">
+                  <%- upperCase(provinciaCliente) %>
                 </h2>
                 <h2 class="name">
-                 Teléfono: <%- telefonoCliente %>
-                </h2>
+                  <%- telefonoCliente %>
+                 </h2>
             </div>
             <% } %>
               <div id="invoice">
@@ -117,16 +127,18 @@
       <table border="0" cellspacing="0" cellpadding="0">
         <thead>
           <tr>
-            <th class="unit" style="text-align: right">CANT.</th>
-            <th class="unit" style="text-align: left;">DESCRIPCION</th>
-            <th class="unit" style="text-align: right;">PRECIO UNIT.</th>
-            <th class="unit" style="text-align: right;">TOTAL</th>
+            <th class="unit" style="text-align: right; background-color: #cfcfcf;">CANT.</th>
+            <th class="unit" style="text-align: left; background-color: #cfcfcf;">DESCRIPCION</th>
+            <% if(!noPrice){ %>
+            <th class="unit" style="text-align: right;background-color: #cfcfcf;"> PRECIO UNIT.</th>            
+            <th class="unit" style="text-align: right;background-color: #cfcfcf;">TOTAL</th>
+            <% } %>
           </tr>
         </thead>
         <tbody>
           <% listaItems.forEach(function(item){ %>
-            <%- include('./ItemFactNoFiscal.ejs', { itemName: item.nombre_prod, itemPrice: item.precio_ind, itemCant:
-              item.cant_prod, itemTotal: item.total_prod, tipoUn: item.unidad_tipo_prod}); %>
+            <%- include('./ItemFactNoFiscal.ejs', { itemName: upperCase(item.nombre_prod), itemPrice: item.precio_ind, itemCant:
+              item.cant_prod, itemTotal: item.total_prod, tipoUn: item.unidad_tipo_prod, noPrice}); %>
               <% }); %>
         </tbody>
         <tfoot>
@@ -156,7 +168,7 @@
             VENDEDOR:
           </span>
           <span style="margin-top: 5px;margin-bottom: 5px;font-size: 13px;">
-            <%- vendedor %>
+            <%- upperCase(vendedor) %>
           </span>
         </div>
       </div>

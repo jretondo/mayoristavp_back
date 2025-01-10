@@ -16,6 +16,7 @@ import moment from 'moment';
 import errorSend from '../error';
 import { roundNumber } from '../../utils/roundNumb';
 import clientesController from '../../api/components/clientes';
+import usuariosController from '../../api/components/user';
 
 const factuMiddel = () => {
   const middleware = async (
@@ -25,8 +26,8 @@ const factuMiddel = () => {
   ) => {
     try {
       req.body.timer = Number(new Date());
-      const body: any = req.body.dataFact;
-      const user: IUser = req.body.user;
+      const body: dataFact = req.body.dataFact;
+      let user: IUser = req.body.user;
       const pvId = body.pv_id;
       const pvData: Array<INewPV> = await ptosVtaController.get(pvId);
       const productsList: IfactCalc = await calcProdLista(body.lista_prod);
@@ -35,16 +36,9 @@ const factuMiddel = () => {
       if (parseInt(fiscalBool) === 0) {
         body.fiscal = false;
       }
-      let cliente = {
-        cliente_tdoc: 99,
-        cliente_ndoc: 0,
-      };
 
-      if (body.cliente_bool) {
-        cliente = {
-          cliente_tdoc: body.cliente_tdoc || 99,
-          cliente_ndoc: body.cliente_ndoc || 0,
-        };
+      if (!body.cliente_bool) {
+        delete body.cliente_id;
       }
       let letra = '';
 
@@ -63,14 +57,6 @@ const factuMiddel = () => {
       } else {
         body.t_fact = 0;
         letra = 'X';
-      }
-
-      if (
-        body.t_fact === 6 &&
-        productsList.totalFact < 10000 &&
-        body.cliente_tdoc === 99
-      ) {
-        body.cliente_ndoc = 0;
       }
 
       const descuento: number = body.descuentoPerc;
@@ -93,10 +79,18 @@ const factuMiddel = () => {
           productsList.totalNeto - productsList.totalNeto * (descuento / 100);
       }
       let clienteData: IClientes[] = [];
-      if (body.cliente_ndoc && body.cliente_ndoc.length > 5) {
-        clienteData = (await clientesController.list(1, body.cliente_ndoc, 1))
-          .data;
-      }
+
+      body.cliente_id &&
+        body.cliente_id > 0 &&
+        (clienteData = await clientesController.get(body.cliente_id));
+
+      req.body.user_id &&
+        (user = await usuariosController
+          .getUser(req.body.user_id)
+          .then((res) => res[0])
+          .catch((err) => {
+            throw new Error('Usuario no encontrado');
+          }));
 
       const newFact: IFactura = {
         fecha: body.fecha,
@@ -110,14 +104,17 @@ const factuMiddel = () => {
         direccion_origen: pvData[0].direccion,
         raz_soc_origen: pvData[0].raz_soc,
         cond_iva_origen: pvData[0].cond_iva,
-        tipo_doc_cliente: body.cliente_tdoc || 99,
-        n_doc_cliente:
-          Number(body.cliente_tdoc) === 99 ? 0 : body.cliente_ndoc || 0,
-        cond_iva_cliente: body.cond_iva,
+        tipo_doc_cliente: body.cliente_id
+          ? clienteData[0].cuit
+            ? 99
+            : 80
+          : 99,
+        n_doc_cliente: body.cliente_id ? Number(clienteData[0].ndoc) : 0,
+        cond_iva_cliente: body.cliente_id ? clienteData[0].cond_iva : 0,
         email_cliente: body.cliente_email || '',
         nota_cred: false,
         fiscal: body.fiscal,
-        raz_soc_cliente: body.cliente_name || '',
+        raz_soc_cliente: body.cliente_id ? clienteData[0].razsoc : '',
         user_id: user.id || 0,
         seller_name: `${user.nombre} ${user.apellido}`,
         total_fact: Math.round(productsList.totalFact * 100) / 100,
@@ -137,6 +134,8 @@ const factuMiddel = () => {
         direccion_entrega:
           (clienteData.length > 0 && clienteData[0].direccion) || '',
         telefono: (clienteData.length > 0 && clienteData[0].telefono) || '',
+        localidad: (clienteData.length > 0 && clienteData[0].localidad) || '',
+        provincia: (clienteData.length > 0 && clienteData[0].provincia) || '',
       };
 
       let ivaList: Array<IIvaItem> = [];
@@ -153,9 +152,8 @@ const factuMiddel = () => {
           CantReg: 1,
           PtoVta: pvData[0].pv,
           CbteTipo: body.t_fact,
-          DocTipo: cliente.cliente_tdoc || 99,
-          DocNro:
-            Number(cliente.cliente_tdoc) === 99 ? 0 : cliente.cliente_ndoc || 0,
+          DocTipo: body.cliente_id ? (clienteData[0].cuit ? 80 : 99) : 99,
+          DocNro: body.cliente_id ? Number(clienteData[0].ndoc) : 0,
           CbteFch: moment(body.fecha, 'YYYY-MM-DD').format('YYYYMMDD'),
           ImpTotal: Math.round(productsList.totalFact * 100) / 100,
           MonCotiz: 1,
@@ -333,5 +331,19 @@ interface IIvaItem {
   Id: AlicuotasIva;
   BaseImp: number;
   Importe: number;
+}
+interface dataFact {
+  fecha: Date;
+  pv_id: number;
+  fiscal: boolean;
+  forma_pago: number;
+  enviar_email: boolean;
+  cliente_email: string;
+  cliente_bool: boolean;
+  lista_prod: INewFactura['lista_prod'];
+  descuentoPerc: number;
+  variosPagos: boolean;
+  t_fact: number;
+  cliente_id?: number;
 }
 export = factuMiddel;

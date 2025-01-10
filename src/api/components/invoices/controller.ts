@@ -185,17 +185,13 @@ export = (injectedStore: typeof StoreType) => {
       colOrigin: Columns.prodPrincipal.id,
       type: ETypesJoin.left,
     };
-    let order: Iorder;
+
     if (page) {
       pages = {
         currentPage: page,
         cantPerPage: cantPerPage || 10,
         order: Columns.facturas.create_time,
         asc: true,
-      };
-      order = {
-        asc: false,
-        columns: [Columns.facturas.create_time],
       };
       const totales = await store.list(
         Tables.FACTURAS,
@@ -215,7 +211,7 @@ export = (injectedStore: typeof StoreType) => {
         undefined,
         joinQuery,
       );
-      console.log('totales2 :>> ', totales2);
+
       const data = await store.list(
         Tables.FACTURAS,
         [ESelectFunct.all],
@@ -223,7 +219,7 @@ export = (injectedStore: typeof StoreType) => {
         undefined,
         pages,
         undefined,
-        order,
+        { columns: [Columns.facturas.create_time], asc: false },
       );
       const cant = await store.list(
         Tables.FACTURAS,
@@ -266,13 +262,8 @@ export = (injectedStore: typeof StoreType) => {
         undefined,
         undefined,
         undefined,
-        { columns: [Columns.facturas.fecha], asc: false },
+        { columns: [Columns.facturas.create_time], asc: false },
       );
-
-      const dataFact = {
-        filePath: '',
-        fileName: '',
-      };
 
       if (pdf) {
         const cajaList: any = await createListSellsPDF(
@@ -545,6 +536,9 @@ export = (injectedStore: typeof StoreType) => {
           email: newFact.email_cliente,
           cond_iva: newFact.cond_iva_cliente,
           direccion: '',
+          entrega: '',
+          provincia: '',
+          localidad: '',
         };
         try {
           await ControllerClientes.upsert(newClient, next);

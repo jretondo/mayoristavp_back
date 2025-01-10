@@ -84,6 +84,9 @@ export = (injectedStore: typeof StoreType) => {
       email: body.email,
       cond_iva: body.cond_iva,
       direccion: body.direccion,
+      entrega: body.entrega,
+      provincia: body.provincia,
+      localidad: body.localidad,
     };
 
     try {

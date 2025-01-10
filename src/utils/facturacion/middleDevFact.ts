@@ -81,6 +81,8 @@ const devFactMiddle = () => {
       descuento: dataFact[0].descuento,
       direccion_entrega: dataFact[0].direccion_entrega || '',
       telefono: dataFact[0].telefono || '',
+      localidad: dataFact[0].localidad || '',
+      provincia: dataFact[0].provincia || '',
     };
     let newDet: Array<IDetFactura> = [];
 

@@ -45,6 +45,9 @@ export interface IClientes {
   email: string;
   cond_iva: number;
   direccion: string;
+  entrega: string;
+  provincia: string;
+  localidad: string;
 }
 export interface IMovStock {
   id?: number;
@@ -107,6 +110,8 @@ export interface IFactura {
   det_rbo?: string;
   direccion_entrega: string;
   telefono: string;
+  localidad: string;
+  provincia: string;
 }
 
 export interface IDetFactura {

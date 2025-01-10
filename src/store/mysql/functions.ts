@@ -266,6 +266,10 @@ export const selectContructor = (
     } else {
       query = ` ${query} ORDER BY ${pages.order} ${asc} LIMIT ${desdePag}, ${pages.cantPerPage} `;
     }
+  } else {
+    if (order) {
+      query = ` ${query} ${strOrder} `;
+    }
   }
   return query;
 };

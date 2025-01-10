@@ -8,10 +8,12 @@ minimumFractionDigits: 2, maximumFractionDigits: 2 }); } %>
     <%- formatoCantidad(itemCant) %>
   </td>
   <td class="unit" style="text-align: left"><%- itemName %></td>
+  <% if(!noPrice){ %>
   <td class="unit" style="text-align: right">
     <%- formatoPrecio(itemPrice) %>
   </td>
   <td class="unit" style="text-align: right">
     <%- formatoPrecio(itemTotal) %>
   </td>
+  <% } %>
 </tr>
