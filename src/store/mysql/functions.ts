@@ -72,7 +72,7 @@ export const selectContructor = (
   whereParamsArray?: Array<IWhereParams>,
   groupBy?: Array<string>,
   pages?: Ipages,
-  join?: IJoin,
+  join?: IJoin[],
   order?: Iorder,
 ) => {
   let query = ` SELECT `;
@@ -90,8 +90,10 @@ export const selectContructor = (
     }
   });
 
-  if (join) {
-    query = ` ${query} ${join.type} JOIN ${join.table} ON ${table}.${join.colOrigin} = ${join.table}.${join.colJoin} `;
+  if (join && join.length > 0) {
+    join.map((join) => {
+      query = ` ${query} ${join.type} JOIN ${join.table} ON ${table}.${join.colOrigin} = ${join.table}.${join.colJoin} `;
+    });
   }
 
   if (whereParamsArray) {

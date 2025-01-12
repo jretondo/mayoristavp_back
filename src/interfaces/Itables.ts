@@ -148,6 +148,11 @@ export interface IFormasPago {
   tipo: MetodosPago;
   importe: number;
   tipo_txt: string;
+  fecha_emision: Date;
+  fecha_vencimiento: Date;
+  banco: string;
+  nro_cheque: string;
+  notas: string;
 }
 
 export interface ICodigoAprobacion {

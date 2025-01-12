@@ -1,6 +1,12 @@
 import { NextFunction, Request, Response } from 'express';
 import { INewFactura, INewProduct, INewPV } from 'interfaces/Irequests';
-import { IClientes, IDetFactura, IFactura, IUser } from 'interfaces/Itables';
+import {
+  IClientes,
+  IDetFactura,
+  IFactura,
+  IFormasPago,
+  IUser,
+} from 'interfaces/Itables';
 import ptosVtaController from '../../api/components/ptosVta';
 import prodController from '../../api/components/products';
 import {
@@ -35,6 +41,16 @@ const factuMiddel = () => {
       const variosPagos = body.variosPagos;
       if (parseInt(fiscalBool) === 0) {
         body.fiscal = false;
+      }
+
+      if (variosPagos && body.variosPagos.length > 0) {
+        let totalPagos = 0;
+        body.variosPagos.forEach((prod) => {
+          totalPagos += prod.importe;
+        });
+        if (totalPagos.toFixed(2) !== productsList.totalFact.toFixed(2)) {
+          throw new Error('La suma de los pagos no coincide con el total');
+        }
       }
 
       if (!body.cliente_bool) {
@@ -91,6 +107,29 @@ const factuMiddel = () => {
           .catch((err) => {
             throw new Error('Usuario no encontrado');
           }));
+
+      if (
+        body.cliente_id &&
+        body.cliente_id > 0 &&
+        body.variosPagos &&
+        body.variosPagos.length > 0
+      ) {
+        if (body.variosPagos.some((pago) => pago.tipo === 4)) {
+          throw new Error(
+            'No se puede facturar con cuenta corriente y cliente seleccionado',
+          );
+        }
+      } else if (
+        !body.cliente_id &&
+        body.variosPagos &&
+        body.variosPagos.length > 0
+      ) {
+        if (body.variosPagos.some((pago) => pago.tipo === 4)) {
+          throw new Error(
+            'No se puede facturar con cuenta corriente y cliente seleccionado',
+          );
+        }
+      }
 
       const newFact: IFactura = {
         fecha: body.fecha,
@@ -342,7 +381,7 @@ interface dataFact {
   cliente_bool: boolean;
   lista_prod: INewFactura['lista_prod'];
   descuentoPerc: number;
-  variosPagos: boolean;
+  variosPagos: IFormasPago[];
   t_fact: number;
   cliente_id?: number;
 }

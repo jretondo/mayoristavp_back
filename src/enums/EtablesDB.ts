@@ -59,6 +59,7 @@ enum ProductosPrincipal {
   family = 'family',
   id_prod = 'id_prod',
   stock = 'stock',
+  min_stock = 'min_stock',
 }
 
 enum ProductsImg {
@@ -205,6 +206,18 @@ enum HeroSlider {
   active = 'active',
 }
 
+enum Cheques {
+  id = 'id',
+  fecha_emision = 'fecha_emision',
+  fecha_vencimiento = 'fecha_vencimiento',
+  banco = 'banco',
+  nro_cheque = 'nro_cheque',
+  importe = 'importe',
+  notas = 'notas',
+  id_forma_pago = 'id_forma_pago',
+  id_cliente = 'id_cliente',
+}
+
 export enum MetodosPago {
   efectivo = 0,
   mercaPago = 1,
@@ -234,6 +247,7 @@ export enum Tables {
   FORMAS_PAGO = 'formas_pago',
   CODIGOS_APROBACION = 'codigo_aprobacion',
   HERO_SLIDER = 'hero_slider',
+  CHEQUES = 'cheques',
 }
 
 export const Columns = {
@@ -254,4 +268,5 @@ export const Columns = {
   formasPago: FormasPago,
   codigosAprobacion: CodigosAprobacion,
   heroSlider: HeroSlider,
+  cheques: Cheques,
 };

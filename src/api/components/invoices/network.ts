@@ -14,7 +14,7 @@ import factuMiddelDevPart from '../../../utils/facturacion/middleFactuDevPart';
 
 const list = (req: Request, res: Response, next: NextFunction) => {
   Controller.list(
-    Number(req.query.pvId),
+    req.query.pvId ? Number(req.query.pvId) : undefined,
     Number(req.query.fiscal),
     Number(req.query.cbte),
     Number(req.params.page),

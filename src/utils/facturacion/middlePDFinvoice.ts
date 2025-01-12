@@ -31,7 +31,7 @@ export const invoicePDFMiddle = () => {
       const noPrice: boolean = Boolean(req.query.noPrice);
       const newFact: IFactura = req.body.newFact;
       const productsList: Array<IDetFactura> = req.body.productsList;
-      const variosPagos = req.body.variosPagos;
+      let variosPagos = req.body.variosPagos;
       const dataFiscal:
         | FactInscriptoProd
         | FactInscriptoServ
@@ -147,6 +147,39 @@ export const invoicePDFMiddle = () => {
         path.join('public', 'css', 'style.css'),
         'utf8',
       );
+
+      if (variosPagos) {
+        const sortedList = variosPagos.sort((a: any, b: any) => {
+          if (parseInt(a.tipo) === 6) {
+            return 1;
+          }
+          return -1;
+        });
+        const sortedList2 = sortedList.reduce((acc: any, item: any) => {
+          if (parseInt(item.tipo) === 6) {
+            acc.push(item);
+          } else {
+            if (acc.length > 0 && acc[acc.length - 1].tipo === item.tipo) {
+              acc[acc.length - 1].importe += item.importe;
+            } else {
+              acc.push(item);
+            }
+          }
+          return acc;
+        }, []);
+        variosPagos = sortedList2.map((item: any) => {
+          return {
+            ...item,
+            fecha_emision: moment(item.fecha_emision, 'YYYY-MM-DD').format(
+              'DD/MM/YY',
+            ),
+            fecha_vencimiento: moment(
+              item.fecha_vencimiento,
+              'YYYY-MM-DD',
+            ).format('DD/MM/YY'),
+          };
+        });
+      }
 
       let condIvaStr = '';
       let condIvaStrCliente = '';

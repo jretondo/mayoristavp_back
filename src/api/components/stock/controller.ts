@@ -1,5 +1,6 @@
 import {
   IChangeStock,
+  IJoin,
   Iorder,
   Ipages,
   IWhereParams,
@@ -17,9 +18,12 @@ import {
   EConcatWhere,
   EModeWhere,
   ESelectFunct,
+  ETypesJoin,
 } from '../../../enums/EfunctMysql';
 import { Tables, Columns } from '../../../enums/EtablesDB';
 import StoreType from '../../../store/mysql';
+import { createProdListStockPDF } from '../../../utils/facturacion/lists/createListProductsStock';
+import fs from 'fs';
 
 export = (injectedStore: typeof StoreType) => {
   let store = injectedStore;
@@ -358,6 +362,7 @@ export = (injectedStore: typeof StoreType) => {
     group?: number,
     page?: number,
     cantPerPage?: number,
+    pdf?: boolean,
   ) => {
     let data: Array<IMovStock>;
     let pages: Ipages;
@@ -366,7 +371,12 @@ export = (injectedStore: typeof StoreType) => {
       const filter: IWhereParams = {
         mode: EModeWhere.strict,
         concat: EConcatWhere.and,
-        items: [{ column: Columns.stock.id_prod, object: String(prodId) }],
+        items: [
+          {
+            column: `${Tables.STOCK}.${Columns.stock.id_prod}`,
+            object: String(prodId),
+          },
+        ],
       };
       filters.push(filter);
     }
@@ -375,14 +385,24 @@ export = (injectedStore: typeof StoreType) => {
         const filter: IWhereParams = {
           mode: EModeWhere.strict,
           concat: EConcatWhere.and,
-          items: [{ column: Columns.stock.pv_id, object: String(0) }],
+          items: [
+            {
+              column: `${Tables.STOCK}.${Columns.stock.pv_id}`,
+              object: String(0),
+            },
+          ],
         };
         filters.push(filter);
       } else {
         const filter: IWhereParams = {
           mode: EModeWhere.strict,
           concat: EConcatWhere.and,
-          items: [{ column: Columns.stock.pv_id, object: String(pvId) }],
+          items: [
+            {
+              column: `${Tables.STOCK}.${Columns.stock.pv_id}`,
+              object: String(pvId),
+            },
+          ],
         };
         filters.push(filter);
       }
@@ -391,7 +411,12 @@ export = (injectedStore: typeof StoreType) => {
       const filter: IWhereParams = {
         mode: EModeWhere.strict,
         concat: EConcatWhere.and,
-        items: [{ column: Columns.stock.category, object: String(cat) }],
+        items: [
+          {
+            column: `${Tables.STOCK}.${Columns.stock.category}`,
+            object: String(cat),
+          },
+        ],
       };
       filters.push(filter);
     }
@@ -399,17 +424,24 @@ export = (injectedStore: typeof StoreType) => {
       const filter: IWhereParams = {
         mode: EModeWhere.strict,
         concat: EConcatWhere.and,
-        items: [{ column: Columns.stock.sub_category, object: String(subCat) }],
+        items: [
+          {
+            column: `${Tables.STOCK}.${Columns.stock.sub_category}`,
+            object: String(subCat),
+          },
+        ],
       };
       filters.push(filter);
     }
 
-    let groupBy: Array<string> = [Columns.stock.id_prod];
+    let groupBy: Array<string> = [
+      `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.name}`,
+    ];
 
     if (group === 1) {
-      groupBy = [Columns.stock.sub_category];
+      groupBy = [`${Tables.STOCK}.${Columns.stock.sub_category}`];
     } else if (group === 2) {
-      groupBy = [Columns.stock.category];
+      groupBy = [`${Tables.STOCK}.${Columns.stock.category}`];
     }
     let arrayOrden: Array<{
       orden: number;
@@ -423,13 +455,19 @@ export = (injectedStore: typeof StoreType) => {
     };
     arrayOrden.map((item, key) => {
       if (item.title === 'Nombre de Productos') {
-        ordenArray.push(Columns.stock.prod_name);
+        ordenArray.push(
+          `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.name}`,
+        );
       } else if (item.title === 'Importe') {
-        ordenArray.push('costoTotal');
+        ordenArray.push(`costoTotal`);
       } else if (item.title === 'Marca') {
-        ordenArray.push(Columns.stock.sub_category);
+        ordenArray.push(
+          `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.subcategory}`,
+        );
       } else if (item.title === 'Proveedor') {
-        ordenArray.push(Columns.stock.category);
+        ordenArray.push(
+          `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.category}`,
+        );
       }
       if (key === arrayOrden.length - 1) {
         orden = {
@@ -438,24 +476,41 @@ export = (injectedStore: typeof StoreType) => {
         };
       }
     });
+    const joinQuery: IJoin = {
+      table: Tables.PRODUCTS_PRINCIPAL,
+      colJoin: Columns.prodPrincipal.id,
+      colOrigin: Columns.stock.id_prod,
+      type: ETypesJoin.right,
+    };
     if (page) {
       pages = {
         currentPage: page,
         cantPerPage: cantPerPage || 10,
-        order: Columns.prodImg.id_prod,
+        order: `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.name}`,
         asc: true,
       };
       data = await store.list(
         Tables.STOCK,
         [
-          ESelectFunct.all,
-          `SUM(${Columns.stock.cant}) as total`,
-          `SUM(${Columns.stock.costo}) as costoTotal`,
+          group
+            ? "'' as prod_name"
+            : `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.name} as prod_name`,
+          group
+            ? "'' as min_stock"
+            : `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.min_stock}`,
+          group === 1
+            ? "'' as category"
+            : `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.category} `,
+          group === 2
+            ? "'' as subcategory"
+            : `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.subcategory} as sub_category`,
+          `COALESCE(SUM(${Tables.STOCK}.${Columns.stock.cant}), 0) as total`,
+          `COALESCE(SUM(${Tables.STOCK}.${Columns.stock.costo}), 0) as costoTotal`,
         ],
         filters,
         groupBy,
         pages,
-        undefined,
+        [joinQuery],
         orden,
       );
       const cant = await store.list(
@@ -463,6 +518,8 @@ export = (injectedStore: typeof StoreType) => {
         [`COUNT(${ESelectFunct.all}) AS COUNT`],
         filters,
         groupBy,
+        undefined,
+        [joinQuery],
       );
       const pagesObj = await getPages(cant.length, 10, Number(page));
       return {
@@ -470,6 +527,38 @@ export = (injectedStore: typeof StoreType) => {
         pagesObj,
       };
     } else {
+      if (pdf) {
+        const list = await store.list(
+          Tables.STOCK,
+          [
+            group
+              ? "'' as prod_name"
+              : `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.name} as prod_name`,
+            group
+              ? "'' as min_stock"
+              : `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.min_stock}`,
+            `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.category} `,
+            `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.subcategory} as sub_category`,
+            `COALESCE(SUM(${Tables.STOCK}.${Columns.stock.cant}), 0) as total`,
+            `COALESCE(SUM(${Tables.STOCK}.${Columns.stock.costo}), 0) as costoTotal`,
+          ],
+          filters,
+          groupBy,
+          undefined,
+          [joinQuery],
+          orden,
+        );
+
+        const stockProdList: any = await createProdListStockPDF(
+          list as Array<any>,
+        );
+        try {
+          setTimeout(() => {
+            fs.unlinkSync(stockProdList.filePath);
+          }, 2500);
+        } catch (error) {}
+        return stockProdList;
+      }
       return await store.list(Tables.STOCK, [ESelectFunct.all], filters);
     }
   };

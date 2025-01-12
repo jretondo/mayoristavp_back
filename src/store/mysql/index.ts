@@ -196,7 +196,7 @@ const list = (
   whereParams?: Array<IWhereParams>,
   groupBy?: Array<string>,
   pages?: Ipages,
-  join?: IJoin,
+  join?: IJoin[],
   order?: Iorder,
 ): Promise<any> => {
   const query = selectContructor(

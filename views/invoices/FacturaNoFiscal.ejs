@@ -88,13 +88,13 @@
                   <%- upperCase(direccionCliente) %>
                 </h2>               
                 <h2 class="name">
-                  <%- upperCase(localidadCliente) %>
+                 LOCALIDAD: <%- upperCase(localidadCliente) %>
                 </h2>
                <h2 class="name">
-                  <%- upperCase(provinciaCliente) %>
+                 PROVINCIA: <%- upperCase(provinciaCliente) %>
                 </h2>
                 <h2 class="name">
-                  <%- telefonoCliente %>
+                  TEL: <%- telefonoCliente %>
                  </h2>
             </div>
             <% } %>
@@ -110,14 +110,20 @@
                     <% if(parseInt(formaPago.code)===5){ %>
                       <div class="to">FORMA DE PAGO:</div>
                       <% variosPagos.forEach(function(item){ %>
-                        <h2 class="name">
-                          <%- item.tipo_txt %>: <%- formatoPrecio(item.importe) %>
-                        </h2>
+                       <% if(parseInt(item.tipo)===6) { %>
+                       <h2 class="name">
+                        <hr style="margin: 0;">
+                        <%- upperCase(item.tipo_txt) %>: <%- formatoPrecio(item.importe) %> <br>
+                         (<%- upperCase(item.banco) %> - Nº <%- item.nro_cheque %> - VENC. <%- item.fecha_vencimiento %>)                        
+                      </h2>
+                      <% } else { %>
+                        <%- upperCase(item.tipo_txt) %>: <%- formatoPrecio(item.importe) %><br>
+                        <% } %>
                         <% }); %>
                           <% }else{ %>
                             <div class="to">FORMA DE PAGO:</div>
                             <h2 class="name">
-                              <%- formaPago.string %>
+                              <%- upperCase(formaPago.string) %>
                             </h2>
                             <% } %>
                               <% } %>

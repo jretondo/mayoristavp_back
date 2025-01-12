@@ -138,7 +138,7 @@ export = (injectedStore: typeof StoreType) => {
           filters,
           groupBy,
           pages,
-          joinQuery,
+          [joinQuery],
         );
         const cant = await store.list(
           Tables.PRODUCTS_PRINCIPAL,
@@ -177,7 +177,7 @@ export = (injectedStore: typeof StoreType) => {
           filters,
           groupBy,
           undefined,
-          joinQuery,
+          [joinQuery],
         );
         return {
           data,
@@ -211,7 +211,7 @@ export = (injectedStore: typeof StoreType) => {
       undefined,
       groupBy,
       undefined,
-      joinQuery,
+      [joinQuery],
       order,
     );
     return new Promise((resolve, reject) => {
@@ -297,6 +297,7 @@ export = (injectedStore: typeof StoreType) => {
       vta_price: body.vta_price,
       vta_fija: Boolean(body.vta_fija),
       family: body.family,
+      min_stock: body.min_stock,
     };
 
     if (body.id) {

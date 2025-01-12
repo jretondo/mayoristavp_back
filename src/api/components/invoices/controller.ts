@@ -28,8 +28,8 @@ export = (injectedStore: typeof StoreType) => {
   let store = injectedStore;
 
   const list = async (
-    pvId: number,
-    fiscal: number,
+    pvId?: number,
+    fiscal?: number,
     cbte?: number,
     page?: number,
     item?: string,
@@ -42,10 +42,12 @@ export = (injectedStore: typeof StoreType) => {
     filter0 = {
       mode: EModeWhere.strict,
       concat: EConcatWhere.and,
-      items: [
-        { column: Columns.facturas.pv_id, object: String(pvId) },
-        { column: Columns.facturas.fiscal, object: String(fiscal) },
-      ],
+      items: pvId
+        ? [
+            { column: Columns.facturas.pv_id, object: String(pvId) },
+            { column: Columns.facturas.fiscal, object: String(fiscal) },
+          ]
+        : [{ column: Columns.facturas.fiscal, object: String(fiscal) }],
     };
     filters.push(filter0);
     if (item) {
@@ -207,28 +209,40 @@ export = (injectedStore: typeof StoreType) => {
         filters,
         [Columns.formasPago.tipo],
         undefined,
-        joinQuery,
+        [joinQuery],
       );
 
       const data = await store.list(
         Tables.FACTURAS,
         [ESelectFunct.all],
         filters,
-        undefined,
+        [`${Tables.FACTURAS}.${Columns.facturas.id}`],
         pages,
         undefined,
         { columns: [Columns.facturas.create_time], asc: false },
       );
+
+      const dataDetails = await data.map(async (item: any) => {
+        const details = await getDetFact(item.id);
+        const pagos = await getFormasPago(item.id);
+        return {
+          ...item,
+          details: await Promise.all(details),
+          pagos: await Promise.all(pagos),
+        };
+      });
+
       const cant = await store.list(
         Tables.FACTURAS,
         [`COUNT(${ESelectFunct.all}) AS COUNT`],
         filters,
+        [`${Tables.FACTURAS}.${Columns.facturas.id}`],
         undefined,
-        undefined,
+        [joinQuery],
       );
       const pagesObj = await getPages(cant[0].COUNT, 10, Number(page));
       return {
-        data,
+        data: await Promise.all(dataDetails),
         pagesObj,
         totales,
         totales2,
@@ -243,7 +257,7 @@ export = (injectedStore: typeof StoreType) => {
         filters,
         [Columns.facturas.forma_pago],
         undefined,
-        joinQuery,
+        [joinQuery],
       );
       const totales2 = await store.list(
         Tables.FACTURAS,
@@ -251,7 +265,7 @@ export = (injectedStore: typeof StoreType) => {
         filters,
         [Columns.formasPago.tipo],
         undefined,
-        joinQuery,
+        [joinQuery],
       );
       const data = await store.list(
         Tables.FACTURAS,
@@ -504,6 +518,11 @@ export = (injectedStore: typeof StoreType) => {
       tipo: MetodosPago;
       tipo_txt: string;
       importe: number;
+      fecha_emision: Date;
+      fecha_vencimiento: Date;
+      banco: string;
+      nro_cheque: string;
+      notas: string;
     }>,
     next: NextFunction,
   ) => {
@@ -562,6 +581,11 @@ export = (injectedStore: typeof StoreType) => {
           tipo: item.tipo,
           importe: item.importe,
           tipo_txt: item.tipo_txt,
+          fecha_emision: item.fecha_emision,
+          fecha_vencimiento: item.fecha_vencimiento,
+          banco: item.banco,
+          nro_cheque: item.nro_cheque,
+          notas: item.notas,
         };
         await store.insert(Tables.FORMAS_PAGO, dataForma);
         if (Number(item.tipo) === 4) {
@@ -709,15 +733,17 @@ export = (injectedStore: typeof StoreType) => {
     };
   };
 
-  const getDetFact = async (idFact: number) => {
+  const getDetFact = async (idFact: number, all?: boolean) => {
     const filterList: Array<IWhereParams> = [
       {
         mode: EModeWhere.strict,
         concat: EConcatWhere.and,
-        items: [
-          { column: Columns.detallesFact.fact_id, object: String(idFact) },
-          { column: Columns.detallesFact.anulada, object: String(0) },
-        ],
+        items: !all
+          ? [
+              { column: Columns.detallesFact.fact_id, object: String(idFact) },
+              { column: Columns.detallesFact.anulada, object: String(0) },
+            ]
+          : [{ column: Columns.detallesFact.fact_id, object: String(idFact) }],
       },
     ];
     return await store.list(Tables.DET_FACTURAS, ['*'], filterList);
