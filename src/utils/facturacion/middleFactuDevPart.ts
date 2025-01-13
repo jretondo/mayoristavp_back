@@ -344,6 +344,7 @@ const calcProdLista = (
         total_costo: roundNumber(totalCosto),
         total_neto: totalNeto,
         precio_ind: dataProd[0].vta_price,
+        descuento: prod.descuento || 0,
       };
 
       factura.listaProd.push(newProdFact);

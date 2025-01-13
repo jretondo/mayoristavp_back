@@ -43,7 +43,7 @@ const handleCon = () => {
         handleCon();
       }, 2000);
     } else {
-      console.log('DB Connected');
+      console.log('DB Connected: ', dbConf.database);
       isAttemptingReconnect = false;
     }
   });

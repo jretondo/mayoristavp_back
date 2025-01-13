@@ -13,6 +13,11 @@ minimumFractionDigits: 2, maximumFractionDigits: 2 }); } %>
     <%- formatoPrecio(itemPrice) %>
   </td>
   <td class="unit" style="text-align: right">
+    <% if (parseInt(itemDescuento)===0) { %> <% } else if
+    (parseInt(itemDescuento)===100) { %> BONIFICADO <% } else { %> <%-
+    itemDescuento %> % <% } %>
+  </td>
+  <td class="unit" style="text-align: right">
     <%- formatoPrecio(itemTotal) %>
   </td>
   <% } %>

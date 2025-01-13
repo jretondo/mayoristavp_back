@@ -1,5 +1,4 @@
 import { MetodosPago } from './../enums/EtablesDB';
-import { EModeWhere, EConcatWhere, ETypesJoin } from '../enums/EfunctMysql';
 export interface Iauth {
   id?: number;
   usuario: string;
@@ -129,6 +128,7 @@ export interface IDetFactura {
   alicuota_id: number;
   precio_ind: number;
   anulada?: boolean;
+  descuento: number;
 }
 
 export interface IMovCtaCte {

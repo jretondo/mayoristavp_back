@@ -90,9 +90,21 @@ export = (injectedStore: typeof StoreType) => {
         Tables.FACTURAS,
         [ESelectFunct.all],
         filters,
-        undefined,
+        [`${Tables.FACTURAS}.${Columns.facturas.id}`],
         pages,
+        undefined,
+        { columns: [Columns.facturas.create_time], asc: false },
       );
+
+      const dataDetails = await data.map(async (item: any) => {
+        const details = await getDetFact(item.id);
+        const pagos = await getFormasPago(item.id);
+        return {
+          ...item,
+          details: await Promise.all(details),
+          pagos: await Promise.all(pagos),
+        };
+      });
       const cant = await store.list(
         Tables.FACTURAS,
         [`COUNT(${ESelectFunct.all}) AS COUNT`],
@@ -102,7 +114,7 @@ export = (injectedStore: typeof StoreType) => {
       );
       const pagesObj = await getPages(cant[0].COUNT, 10, Number(page));
       return {
-        data,
+        data: await Promise.all(dataDetails),
         pagesObj,
       };
     } else {
@@ -345,6 +357,7 @@ export = (injectedStore: typeof StoreType) => {
         Columns.detallesFact.total_neto,
         Columns.detallesFact.alicuota_id,
         Columns.detallesFact.precio_ind,
+        Columns.detallesFact.descuento_porcentaje,
       ];
       const rows: Promise<Array<Array<any>>> = new Promise(
         (resolve, reject) => {
@@ -362,6 +375,7 @@ export = (injectedStore: typeof StoreType) => {
             values.push(item.total_neto);
             values.push(item.alicuota_id);
             values.push(item.precio_ind);
+            values.push(item.descuento);
             rowsvalues.push(values);
             if (item.total_prod < 0) {
               await store.update(

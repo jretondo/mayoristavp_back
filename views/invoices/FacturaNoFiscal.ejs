@@ -67,7 +67,7 @@
               </a></div>
           </div>
           <% }else { %>
-            <div id="client">
+            <div id="client" style="min-width: 15%;">
               <div class="to">CLIENTE:</div>
               <h2 class="name">
                 <%- upperCase(clienteName) %>
@@ -82,7 +82,7 @@
                   <%- upperCase(clienteEmail) %>
                 </a></div>                
             </div>
-            <div id="shipping">
+            <div id="shipping" style="min-width: 25%;">
               <div class="to">ENTREGA:</div>            
                 <h2 class="name">
                   <%- upperCase(direccionCliente) %>
@@ -110,14 +110,14 @@
                     <% if(parseInt(formaPago.code)===5){ %>
                       <div class="to">FORMA DE PAGO:</div>
                       <% variosPagos.forEach(function(item){ %>
-                       <% if(parseInt(item.tipo)===6) { %>
+                       <% if(parseInt(item.tipo)=== 4) { %>
                        <h2 class="name">
-                        <hr style="margin: 0;">
-                        <%- upperCase(item.tipo_txt) %>: <%- formatoPrecio(item.importe) %> <br>
-                         (<%- upperCase(item.banco) %> - Nº <%- item.nro_cheque %> - VENC. <%- item.fecha_vencimiento %>)                        
+                        CUENTA CORRIENTE                     
                       </h2>
                       <% } else { %>
-                        <%- upperCase(item.tipo_txt) %>: <%- formatoPrecio(item.importe) %><br>
+                        <h2 class="name">
+                          CONTADO                  
+                        </h2>
                         <% } %>
                         <% }); %>
                           <% }else{ %>
@@ -136,7 +136,8 @@
             <th class="unit" style="text-align: right; background-color: #cfcfcf;">CANT.</th>
             <th class="unit" style="text-align: left; background-color: #cfcfcf;">DESCRIPCION</th>
             <% if(!noPrice){ %>
-            <th class="unit" style="text-align: right;background-color: #cfcfcf;"> PRECIO UNIT.</th>            
+            <th class="unit" style="text-align: right;background-color: #cfcfcf;"> PRECIO UNIT.</th>        
+            <th class="unit" style="text-align: right;background-color: #cfcfcf;"> DESCUENTO (%)</th>            
             <th class="unit" style="text-align: right;background-color: #cfcfcf;">TOTAL</th>
             <% } %>
           </tr>
@@ -144,7 +145,7 @@
         <tbody>
           <% listaItems.forEach(function(item){ %>
             <%- include('./ItemFactNoFiscal.ejs', { itemName: upperCase(item.nombre_prod), itemPrice: item.precio_ind, itemCant:
-              item.cant_prod, itemTotal: item.total_prod, tipoUn: item.unidad_tipo_prod, noPrice}); %>
+              item.cant_prod, itemTotal: item.total_prod, tipoUn: item.unidad_tipo_prod, noPrice, itemDescuento: item.descuento_porcentaje}); %>
               <% }); %>
         </tbody>
         <tfoot>

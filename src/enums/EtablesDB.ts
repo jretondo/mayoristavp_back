@@ -170,6 +170,7 @@ enum DetalleFact {
   alicuota_id = 'alicuota_id',
   precio_ind = 'precio_ind',
   anulada = 'anulada',
+  descuento_porcentaje = 'descuento_porcentaje',
 }
 
 enum CtaCte {
