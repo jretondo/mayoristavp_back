@@ -43,16 +43,6 @@ const factuMiddel = () => {
         body.fiscal = false;
       }
 
-      if (variosPagos && body.variosPagos.length > 0) {
-        let totalPagos = 0;
-        body.variosPagos.forEach((prod) => {
-          totalPagos += prod.importe;
-        });
-        if (totalPagos.toFixed(2) !== productsList.totalFact.toFixed(2)) {
-          throw new Error('La suma de los pagos no coincide con el total');
-        }
-      }
-
       if (!body.cliente_bool) {
         delete body.cliente_id;
       }
@@ -94,6 +84,17 @@ const factuMiddel = () => {
         productsList.totalNeto =
           productsList.totalNeto - productsList.totalNeto * (descuento / 100);
       }
+
+      if (variosPagos && body.variosPagos.length > 0) {
+        let totalPagos = 0;
+        body.variosPagos.forEach((prod) => {
+          totalPagos += prod.importe;
+        });
+        if (totalPagos.toFixed(2) !== productsList.totalFact.toFixed(2)) {
+          throw new Error('La suma de los pagos no coincide con el total');
+        }
+      }
+
       let clienteData: IClientes[] = [];
 
       body.cliente_id &&
