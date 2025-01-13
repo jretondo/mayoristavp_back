@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { INewPV } from 'interfaces/Irequests';
-import { IDetFactura, IFactura, IUser } from 'interfaces/Itables';
+import { IDetFactura, IFactura, IFormasPago, IUser } from 'interfaces/Itables';
 import moment from 'moment';
 import ControllerInvoices from '../../api/components/invoices';
 import ControllerPtoVta from '../../api/components/ptosVta';
@@ -23,6 +23,20 @@ const devFactMiddle = () => {
     const pvData: Array<INewPV> = await ControllerPtoVta.get(dataFact[0].pv_id);
     const esFiscal = dataFact[0].fiscal;
     const tipoFact = dataFact[0].t_fact;
+
+    let pagos: Array<IFormasPago> = await ControllerInvoices.getFormasPago(
+      idFact,
+    );
+
+    if (pagos && pagos.length > 0) {
+      pagos = pagos.map((item) => {
+        return {
+          ...item,
+          importe: -item.importe,
+        };
+      });
+    }
+
     let tipoNC: number = 0;
     let letra: string = 'DEV';
     if (esFiscal) {
@@ -153,6 +167,7 @@ const devFactMiddle = () => {
     req.body.dataFiscal = dataFiscal;
     req.body.pvData = pvData[0];
     req.body.productsList = newDet;
+    req.body.variosPagos = pagos;
 
     next();
   };

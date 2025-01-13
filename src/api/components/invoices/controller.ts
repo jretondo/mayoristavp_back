@@ -97,7 +97,7 @@ export = (injectedStore: typeof StoreType) => {
       );
 
       const dataDetails = await data.map(async (item: any) => {
-        const details = await getDetFact(item.id);
+        const details = await getDetFact(item.id, true);
         const pagos = await getFormasPago(item.id);
         return {
           ...item,
@@ -235,7 +235,7 @@ export = (injectedStore: typeof StoreType) => {
       );
 
       const dataDetails = await data.map(async (item: any) => {
-        const details = await getDetFact(item.id);
+        const details = await getDetFact(item.id, true);
         const pagos = await getFormasPago(item.id);
         return {
           ...item,
