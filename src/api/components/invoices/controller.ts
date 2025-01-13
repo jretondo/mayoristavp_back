@@ -252,7 +252,8 @@ export = (injectedStore: typeof StoreType) => {
         undefined,
         [joinQuery],
       );
-      const pagesObj = await getPages(cant[0].COUNT, 10, Number(page));
+
+      const pagesObj = await getPages(cant.length, 10, Number(page));
       return {
         data: await Promise.all(dataDetails),
         pagesObj,

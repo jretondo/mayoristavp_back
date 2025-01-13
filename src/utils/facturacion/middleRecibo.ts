@@ -25,7 +25,6 @@ const paymentMiddle = () => {
       ];
 
       const detalle: string = req.body.detalle;
-      const formaPago: number = req.body.formaPago;
       const importe: number = req.body.importe;
       const clienteID: number = req.body.clienteID;
       const user: IUser = req.body.user;
@@ -33,6 +32,7 @@ const paymentMiddle = () => {
       const pvData: Array<INewPV> = await ptosVtaController.get(pvId);
       const tFact: number = -1;
       const letra = 'REC';
+
       const getHighterNum: Array<{ last: number }> = await store.list(
         Tables.FACTURAS,
         [`MAX(${Columns.facturas.cbte}) as last`],
@@ -73,7 +73,7 @@ const paymentMiddle = () => {
         total_iva: 0,
         total_neto: Math.round(importe * 100) / 100,
         total_compra: 0,
-        forma_pago: formaPago,
+        forma_pago: 5,
         pv_id: pvId,
         id_fact_asoc: 0,
         descuento: 0,

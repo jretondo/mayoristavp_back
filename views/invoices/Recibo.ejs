@@ -1,3 +1,5 @@
+<% function formatoPrecio(precio) { return precio.toLocaleString('es-AR', { style: 'currency' , currency: 'ARS' }); } %>
+<% function upperCase(str){return str.toUpperCase()} %>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -90,11 +92,26 @@
                     <%- cbteAsoc %>
                   </h2>
                   <% }else{ %>
-                    <div class="to">Forma de Pago:</div>
-                    <h2 class="name">
-                      <%- formaPago %>
-                    </h2>
-                    <% } %>
+                    <% if(parseInt(formaPago.code)===5){ %>
+                      <div class="to">FORMA DE PAGO:</div>
+                      <% variosPagos.forEach(function(item){ %>
+                       <% if(parseInt(item.tipo)===6) { %>
+                       <h2 class="name">
+                        <hr style="margin: 0;">
+                        <%- upperCase(item.tipo_txt) %>: <%- formatoPrecio(item.importe) %> <br>
+                         (<%- upperCase(item.banco) %> - Nº <%- item.nro_cheque %> - VENC. <%- item.fecha_vencimiento %>)                        
+                      </h2>
+                      <% } else { %>
+                        <%- upperCase(item.tipo_txt) %>: <%- formatoPrecio(item.importe) %><br>
+                        <% } %>
+                        <% }); %>
+                          <% }else{ %>
+                            <div class="to">FORMA DE PAGO:</div>
+                            <h2 class="name">
+                              <%- upperCase(formaPago.string) %>
+                            </h2>
+                            <% } %>
+                              <% } %>
               </div>
       </div>
 

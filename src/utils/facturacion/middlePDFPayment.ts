@@ -19,6 +19,7 @@ export const paymentPDFMiddle = () => {
     try {
       const pvData: INewPV = req.body.pvData;
       const newFact: IFactura = req.body.newFact;
+      let variosPagos = req.body.pagos;
 
       function base64_encode(file: any) {
         // read binary data
@@ -140,18 +141,32 @@ export const paymentPDFMiddle = () => {
       }
 
       const formaPago = {
-        formaPago: formapagoStr,
+        string: formapagoStr,
+        code: newFact.forma_pago,
       };
+
+      if (variosPagos && variosPagos.length > 0) {
+        variosPagos = variosPagos.map((pago: any) => {
+          return {
+            ...pago,
+            fecha_emision: moment(pago.fecha_emision).format('DD/MM/YY'),
+            fecha_vencimiento: moment(pago.fecha_vencimiento).format(
+              'DD/MM/YY',
+            ),
+          };
+        });
+      }
 
       const datos2 = {
         myCss: `<style>${myCss}</style>`,
         cbteAsoc,
         detalle: newFact.det_rbo,
+        variosPagos,
         ...encabezado,
         ...ptoVta,
         ...cliente,
         ...totales,
-        ...formaPago,
+        formaPago,
         ...footer,
       };
 

@@ -1,5 +1,9 @@
 import { INewInsert } from './../../../interfaces/Ifunctions';
-import { IFactura, IMovCtaCte } from './../../../interfaces/Itables';
+import {
+  IFactura,
+  IFormasPago,
+  IMovCtaCte,
+} from './../../../interfaces/Itables';
 import { AfipClass } from './../../../utils/facturacion/AfipClass';
 import { Ipages, IWhereParams } from 'interfaces/Ifunctions';
 import { IClientes } from 'interfaces/Itables';
@@ -246,6 +250,7 @@ export = (injectedStore: typeof StoreType) => {
     fileName: string,
     filePath: string,
     clienteData: IClientes,
+    pagos: IFormasPago[],
     next: NextFunction,
   ) => {
     const result: INewInsert = await store.insert(Tables.FACTURAS, newFact);
@@ -260,6 +265,20 @@ export = (injectedStore: typeof StoreType) => {
         detalle: 'Recibo de Pago',
       };
       const resultCtaCte = await store.insert(Tables.CTA_CTE, ctacteData);
+
+      pagos.map(async (pago) => {
+        await store.insert(Tables.FORMAS_PAGO, {
+          id_fact: result.insertId,
+          tipo: pago.tipo,
+          importe: pago.importe,
+          tipo_txt: pago.tipo_txt,
+          fecha_emision: pago.fecha_emision,
+          fecha_vencimiento: pago.fecha_vencimiento,
+          banco: pago.banco,
+          nro_cheque: pago.nro_cheque,
+          notas: pago.notas,
+        });
+      });
 
       setTimeout(() => {
         fs.unlinkSync(filePath);

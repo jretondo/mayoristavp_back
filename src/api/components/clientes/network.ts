@@ -111,6 +111,7 @@ const newPayment = (req: Request, res: Response, next: NextFunction) => {
     req.body.fileName,
     req.body.filePath,
     req.body.clienteData,
+    req.body.pagos,
     next,
   )
     .then((dataFact) => {

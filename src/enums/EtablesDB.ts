@@ -189,6 +189,12 @@ enum FormasPago {
   id_fact = 'id_fact',
   tipo = 'tipo',
   importe = 'importe',
+  tipo_txt = 'tipo_txt',
+  fecha_emision = 'fecha_emision',
+  nro_cheque = 'nro_cheque',
+  banco = 'banco',
+  fecha_vencimiento = 'fecha_vencimiento',
+  notas = 'notas',
 }
 
 enum CodigosAprobacion {
