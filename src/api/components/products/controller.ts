@@ -21,6 +21,7 @@ import {
 } from 'interfaces/Ifunctions';
 import { INewProduct } from 'interfaces/Irequests';
 import { IImgProd } from 'interfaces/Itables';
+import StockController from '../stock';
 
 export = (injectedStore: typeof StoreType) => {
   let store = injectedStore;
@@ -33,6 +34,7 @@ export = (injectedStore: typeof StoreType) => {
     name?: string,
     provider?: string,
     brand?: string,
+    stock?: boolean,
   ) => {
     let filter: IWhereParams | undefined = undefined;
     let filters: Array<IWhereParams> = [];
@@ -113,7 +115,7 @@ export = (injectedStore: typeof StoreType) => {
           order: Columns.prodImg.id_prod,
           asc: true,
         };
-        const data = await store.list(
+        let data = await store.list(
           Tables.PRODUCTS_PRINCIPAL,
           [
             `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.id} as id_prod`,
@@ -146,12 +148,20 @@ export = (injectedStore: typeof StoreType) => {
           filters,
         );
         const pagesObj = await getPages(cant[0].COUNT, 10, Number(page));
+
+        if (stock) {
+          data = data.map(async (item: any) => {
+            const stock = await StockController.getStockProd(item.id_prod);
+            item.stock = stock;
+            return item;
+          });
+        }
+
         return {
-          data,
+          data: await Promise.all(data),
           pagesObj,
         };
       } else {
-        console.log('filters :>> ', filters);
         const data = await store.list(
           Tables.PRODUCTS_PRINCIPAL,
           [

@@ -563,15 +563,20 @@ export = (injectedStore: typeof StoreType) => {
     }
   };
 
-  const getStockProd = async (idProd: number, pvId: number) => {
+  const getStockProd = async (idProd: number, pvId?: number) => {
     let filters: Array<IWhereParams> = [];
     const filter: IWhereParams = {
       mode: EModeWhere.strict,
       concat: EConcatWhere.and,
-      items: [
-        { column: Columns.stock.pv_id, object: String(pvId < 0 ? 0 : pvId) },
-        { column: Columns.stock.id_prod, object: String(idProd) },
-      ],
+      items: pvId
+        ? [
+            {
+              column: Columns.stock.pv_id,
+              object: String(pvId < 0 ? 0 : pvId),
+            },
+            { column: Columns.stock.id_prod, object: String(idProd) },
+          ]
+        : [{ column: Columns.stock.id_prod, object: String(idProd) }],
     };
     filters.push(filter);
     const response = await store.list(

@@ -17,6 +17,7 @@ const list = (req: Request, res: Response, next: NextFunction) => {
     String(req.query.name),
     String(req.query.provider),
     String(req.query.brand),
+    req.query.stock ? Boolean(req.query.stock) : undefined,
   )
     .then((lista: any) => {
       success({

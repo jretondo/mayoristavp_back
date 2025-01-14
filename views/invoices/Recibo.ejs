@@ -1,5 +1,5 @@
 <% function formatoPrecio(precio) { return precio.toLocaleString('es-AR', { style: 'currency' , currency: 'ARS' }); } %>
-<% function upperCase(str){return str.toUpperCase()} %>
+<% function upperCase(str){return str?.toUpperCase()||""} %>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -15,16 +15,16 @@
       <div id="logo">
         <img src="<%- logo %> ">
         <h2 class="name">
-          <%- razSocOrigen %>
+          <%- upperCase(razSocOrigen) %>
         </h2>
         <div>
-          <%- direccionOrigen %>
+          <%- upperCase(direccionOrigen) %>
         </div>
         <div style="font-weight: bold">
-          <%- condIvaOrigen %>
+          <%- upperCase(condIvaOrigen) %>
         </div>
         <div><a href="mailto:<%- emailOrigen %> ">
-            <%- emailOrigen %>
+            <%- upperCase(emailOrigen) %>
           </a></div>
       </div>
       <div style="position: absolute;text-align: center;width: 100%;">
@@ -32,7 +32,7 @@
         <div
           style="width: 80px;height: 80px;background: #80808061;margin: auto;border: 4px solid black;margin-top: 20px;">
           <h1 style="margin-top: 5px;margin-bottom: 5px;font-size: 35px;">
-            X
+            <%- letra %>
           </h1>
           <span>No Fiscal</span>
         </div>
@@ -50,7 +50,7 @@
         <div style="margin-bottom: 7px;">IIBB: <span style="font-weight: bold;">
             <%- iibbOrigen %>
           </span></div>
-        <div style="margin-bottom: 7px;">Inicio de act.: <span style="font-weight: bold;">
+        <div style="margin-bottom: 7px;">INICIO DE ACT.: <span style="font-weight: bold;">
             <%- iniAct %>
           </span></div>
       </div>
@@ -70,16 +70,16 @@
             <div id="client">
               <div class="to">CLIENTE:</div>
               <h2 class="name">
-                <%- clienteName %>
+                <%- upperCase(clienteName) %>
               </h2>
               <h2 class="name">
-                <%- condIvaCliente %>
+                <%- upperCase(condIvaCliente) %>
               </h2>
               <h2 class="name">
                 <%- tipoDoc %> : <%- clienteNro %>
               </h2>
-              <div class="email"><a href="mailto:<%- clienteEmail %> ">
-                  <%- clienteEmail %>
+              <div class="email"><a href="mailto:<%- upperCase(clienteEmail) %> ">
+                  <%- upperCase(clienteEmail) %>
                 </a></div>
             </div>
             <% } %>
@@ -123,8 +123,8 @@
         </thead>
         <tbody>
           <tr>
-            <td style="text-align: left;">
-              <%- detalle %>
+            <td style="text-align: left; font-size: 12px;">
+              <%- upperCase(detalle) %>
             </td>
           </tr>
         </tbody>
@@ -152,10 +152,10 @@
       <div style="width: 40%">
         <div style="position: absolute;left: 0%;">
           <h3 style="margin-top: 5px;margin-bottom: 5px">
-            Vendedor:
+            VENDEDOR:
           </h3>
           <h3 style="margin-top: 5px;margin-bottom: 5px">
-            <%- vendedor %>
+            <%- upperCase(vendedor) %>
           </h3>
         </div>
       </div>
