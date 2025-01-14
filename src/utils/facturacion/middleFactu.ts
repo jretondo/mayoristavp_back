@@ -260,7 +260,7 @@ const calcProdLista = (
       const totalProd =
         dataProd[0].vta_price *
         prod.cant_prod *
-        (1 - (prod.descuento || 0) / 100);
+        (1 - (prod.descuento_porcentaje || 0) / 100);
 
       const totalNeto = totalProd / (1 + dataProd[0].iva / 100);
 
@@ -272,12 +272,12 @@ const calcProdLista = (
         unidad_tipo_prod: dataProd[0].unidad,
         id_prod: prod.id_prod,
         total_prod: roundNumber(totalProd),
-        total_iva: totalIva,
+        total_iva: roundNumber(totalIva),
         alicuota_id: dataProd[0].iva,
         total_costo: roundNumber(totalCosto),
-        total_neto: totalNeto,
+        total_neto: roundNumber(totalNeto),
         precio_ind: dataProd[0].vta_price,
-        descuento: prod.descuento || 0,
+        descuento_porcentaje: prod.descuento_porcentaje || 0,
       };
 
       factura.listaProd.push(newProdFact);

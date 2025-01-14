@@ -376,7 +376,7 @@ export = (injectedStore: typeof StoreType) => {
             values.push(item.total_neto);
             values.push(item.alicuota_id);
             values.push(item.precio_ind);
-            values.push(item.descuento);
+            values.push(item.descuento_porcentaje);
             rowsvalues.push(values);
             if (item.total_prod < 0) {
               await store.update(
@@ -590,7 +590,6 @@ export = (injectedStore: typeof StoreType) => {
     );
 
     if (Number(newFact.forma_pago) === 5) {
-      console.log('variosPagos :>> ', variosPagos);
       variosPagos.map(async (item) => {
         const dataForma: IFormasPago = {
           id_fact: resultInsert.msg.factId,
@@ -603,7 +602,6 @@ export = (injectedStore: typeof StoreType) => {
           nro_cheque: item.nro_cheque,
           notas: item.notas,
         };
-        console.log('dataForma :>> ', dataForma);
         await store.insert(Tables.FORMAS_PAGO, dataForma);
         if (Number(item.tipo) === 4) {
           await newmovCtaCte(

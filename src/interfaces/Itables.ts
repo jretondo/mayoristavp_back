@@ -128,7 +128,7 @@ export interface IDetFactura {
   alicuota_id: number;
   precio_ind: number;
   anulada?: boolean;
-  descuento: number;
+  descuento_porcentaje: number;
 }
 
 export interface IMovCtaCte {

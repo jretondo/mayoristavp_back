@@ -89,7 +89,7 @@ export interface INewFactura {
   lista_prod: Array<{
     id_prod: number;
     cant_prod: number;
-    descuento?: number;
+    descuento_porcentaje?: number;
   }>;
   cliente_bool: boolean;
   cliente_tdoc?: number;
