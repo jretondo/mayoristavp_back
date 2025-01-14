@@ -20,6 +20,7 @@ export const paymentPDFMiddle = () => {
       const pvData: INewPV = req.body.pvData;
       const newFact: IFactura = req.body.newFact;
       let variosPagos = req.body.pagos;
+      let pagos = [];
 
       function base64_encode(file: any) {
         // read binary data
@@ -164,7 +165,7 @@ export const paymentPDFMiddle = () => {
           }
           return acc;
         }, []);
-        variosPagos = sortedList2.map((item: any) => {
+        pagos = sortedList2.map((item: any) => {
           return {
             ...item,
             fecha_emision: moment(item.fecha_emision, 'YYYY-MM-DD').format(
@@ -182,7 +183,7 @@ export const paymentPDFMiddle = () => {
         myCss: `<style>${myCss}</style>`,
         cbteAsoc,
         detalle: newFact.det_rbo,
-        variosPagos,
+        variosPagos: pagos,
         ...encabezado,
         ...ptoVta,
         ...cliente,

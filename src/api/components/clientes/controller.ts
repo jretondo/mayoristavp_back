@@ -303,6 +303,34 @@ export = (injectedStore: typeof StoreType) => {
     return dataFact;
   };
 
+  const deletePayment = async (idFactura: number) => {
+    try {
+      const deleted: any = await store.removeWhere(
+        Tables.FACTURAS,
+        [
+          { column: Columns.facturas.id, value: idFactura },
+          { column: Columns.facturas.t_fact, value: -1 },
+        ],
+        'AND',
+      );
+
+      if (deleted && deleted.affectedRows > 0) {
+        await store.remove(Tables.CTA_CTE, {
+          id_factura: idFactura,
+        });
+        await store.remove(Tables.FORMAS_PAGO, {
+          id_fact: idFactura,
+        });
+        return deleted;
+      } else {
+        throw new Error('Error interno. No se pudo eliminar el recibo.');
+      }
+    } catch (error) {
+      console.log('error', error);
+      throw new Error('Error interno. No se pudo eliminar el recibo.');
+    }
+  };
+
   return {
     list,
     upsert,
@@ -312,5 +340,6 @@ export = (injectedStore: typeof StoreType) => {
     listCtaCteClient,
     registerPayment,
     getDataPayment,
+    deletePayment,
   };
 };

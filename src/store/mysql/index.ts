@@ -127,6 +127,34 @@ const remove = async (table: Tables, data: object) => {
   });
 };
 
+const removeWhere = async (
+  table: Tables,
+  data: {
+    column: string;
+    value: string | number;
+  }[],
+  connector: string,
+) => {
+  const where = data
+    .map((item) => {
+      return `${item.column} = ${item.value}`;
+    })
+    .join(` ${connector} `);
+  console.log('where', where);
+  return new Promise((resolve, reject) => {
+    connection.query(
+      ` DELETE FROM ${table} WHERE ${where} `,
+      (err: Error, result: any) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      },
+    );
+  });
+};
+
 const query = async (
   table: Tables,
   query: any,
@@ -247,4 +275,5 @@ export = {
   list,
   updateWhere,
   getAnyCol,
+  removeWhere,
 };

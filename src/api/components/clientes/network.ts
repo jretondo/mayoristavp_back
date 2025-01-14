@@ -146,6 +146,14 @@ const getDataPaymentPDF = (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
+const deletePayment = (req: Request, res: Response, next: NextFunction) => {
+  Controller.deletePayment(Number(req.body.id))
+    .then((data) => {
+      success({ req, res, message: data });
+    })
+    .catch(next);
+};
+
 router
   .get('/dataFiscal', secure(EPermissions.clientes), dataFiscalPadron)
   .get('/ctaCte/:page', secure(EPermissions.clientes), listCtaCteClient)
@@ -160,6 +168,7 @@ router
   )
   .get('/:page', secure(EPermissions.clientes), listPagination)
   .delete('/:id', secure(EPermissions.clientes), remove)
+  .post('/payments/delete', secure(EPermissions.clientes), deletePayment)
   .get('/', secure(EPermissions.clientes), list)
   .post(
     '/payments',

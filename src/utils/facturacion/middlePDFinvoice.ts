@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { INewPV } from 'interfaces/Irequests';
-import { IDetFactura, IFactura } from 'interfaces/Itables';
+import { IDetFactura, IFactura, IFormasPago } from 'interfaces/Itables';
 import fs from 'fs';
 import path from 'path';
 import QRCode from 'qrcode';
@@ -31,7 +31,25 @@ export const invoicePDFMiddle = () => {
       const noPrice: boolean = Boolean(req.query.noPrice);
       const newFact: IFactura = req.body.newFact;
       const productsList: Array<IDetFactura> = req.body.productsList;
-      let variosPagos = req.body.variosPagos;
+      let variosPagos: { tipo: Number }[] = [];
+      try {
+        variosPagos = req.body.variosPagos.map((pago: IFormasPago) => {
+          if (pago.tipo === 4) {
+            return {
+              tipo: pago.tipo,
+            };
+          } else {
+            return {
+              tipo: 1,
+            };
+          }
+        });
+
+        variosPagos = variosPagos.filter(
+          (item, index) =>
+            variosPagos.findIndex((t) => t.tipo === item.tipo) === index,
+        );
+      } catch (error) {}
       const dataFiscal:
         | FactInscriptoProd
         | FactInscriptoServ
@@ -147,43 +165,6 @@ export const invoicePDFMiddle = () => {
         path.join('public', 'css', 'style.css'),
         'utf8',
       );
-
-      if (variosPagos) {
-        const sortedList = variosPagos.sort((a: any, b: any) => {
-          if (parseInt(a.tipo) === 6) {
-            return 1;
-          }
-          return -1;
-        });
-        const sortedList2 = sortedList.reduce((acc: any, item: any) => {
-          if (parseInt(item.tipo) === 4) {
-            if (acc.length > 0) {
-              acc[acc.length - 1].importe += item.importe;
-            } else {
-              acc.push(item);
-            }
-          } else {
-            if (acc.length > 0) {
-              acc[acc.length - 1].importe += item.importe;
-            } else {
-              acc.push(item);
-            }
-          }
-          return acc;
-        }, []);
-        variosPagos = sortedList2.map((item: any) => {
-          return {
-            ...item,
-            fecha_emision: moment(item.fecha_emision, 'YYYY-MM-DD').format(
-              'DD/MM/YY',
-            ),
-            fecha_vencimiento: moment(
-              item.fecha_vencimiento,
-              'YYYY-MM-DD',
-            ).format('DD/MM/YY'),
-          };
-        });
-      }
 
       let condIvaStr = '';
       let condIvaStrCliente = '';
