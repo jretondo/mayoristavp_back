@@ -156,10 +156,14 @@ export const invoicePDFMiddle = () => {
           return -1;
         });
         const sortedList2 = sortedList.reduce((acc: any, item: any) => {
-          if (parseInt(item.tipo) === 6) {
-            acc.push(item);
+          if (parseInt(item.tipo) === 4) {
+            if (acc.length > 0) {
+              acc[acc.length - 1].importe += item.importe;
+            } else {
+              acc.push(item);
+            }
           } else {
-            if (acc.length > 0 && acc[acc.length - 1].tipo === item.tipo) {
+            if (acc.length > 0) {
               acc[acc.length - 1].importe += item.importe;
             } else {
               acc.push(item);

@@ -20,6 +20,7 @@ import clientes from './components/clientes/network';
 import stock from './components/stock/network';
 import invoices from './components/invoices/network';
 import heroSlider from './components/heroSlider/network';
+import cheques from './components/cheques/network';
 
 export class App {
   app: Application;
@@ -63,6 +64,7 @@ export class App {
     this.app.use('/api/stock', stock);
     this.app.use('/api/invoices', invoices);
     this.app.use('/api/heroSlider', heroSlider);
+    this.app.use('/api/cheques', cheques);
     this.app.use(errorTrhow);
   }
 

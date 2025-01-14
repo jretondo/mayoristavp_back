@@ -145,14 +145,35 @@ export const paymentPDFMiddle = () => {
         code: newFact.forma_pago,
       };
 
-      if (variosPagos && variosPagos.length > 0) {
-        variosPagos = variosPagos.map((pago: any) => {
+      if (variosPagos) {
+        const sortedList = variosPagos.sort((a: any, b: any) => {
+          if (parseInt(a.tipo) === 6) {
+            return 1;
+          }
+          return -1;
+        });
+        const sortedList2 = sortedList.reduce((acc: any, item: any) => {
+          if (parseInt(item.tipo) === 6) {
+            acc.push(item);
+          } else {
+            if (acc.length > 0 && acc[acc.length - 1].tipo === item.tipo) {
+              acc[acc.length - 1].importe += item.importe;
+            } else {
+              acc.push(item);
+            }
+          }
+          return acc;
+        }, []);
+        variosPagos = sortedList2.map((item: any) => {
           return {
-            ...pago,
-            fecha_emision: moment(pago.fecha_emision).format('DD/MM/YY'),
-            fecha_vencimiento: moment(pago.fecha_vencimiento).format(
+            ...item,
+            fecha_emision: moment(item.fecha_emision, 'YYYY-MM-DD').format(
               'DD/MM/YY',
             ),
+            fecha_vencimiento: moment(
+              item.fecha_vencimiento,
+              'YYYY-MM-DD',
+            ).format('DD/MM/YY'),
           };
         });
       }

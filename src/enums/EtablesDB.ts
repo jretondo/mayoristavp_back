@@ -195,6 +195,7 @@ enum FormasPago {
   banco = 'banco',
   fecha_vencimiento = 'fecha_vencimiento',
   notas = 'notas',
+  estado = 'estado',
 }
 
 enum CodigosAprobacion {
