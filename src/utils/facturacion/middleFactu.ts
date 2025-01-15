@@ -92,6 +92,8 @@ const factuMiddel = () => {
           totalPagos += prod.importe;
         });
         if (totalPagos.toFixed(2) !== productsList.totalFact.toFixed(2)) {
+          console.log('totalPagos', totalPagos.toFixed(2));
+          console.log('totalFact', productsList.totalFact.toFixed(2));
           throw new Error('La suma de los pagos no coincide con el total');
         }
       }
