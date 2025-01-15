@@ -462,6 +462,7 @@ export = (injectedStore: typeof StoreType) => {
             column: Columns.facturas.cuit_origen,
             object: String(pvData[0].cuit),
           },
+          { column: Columns.facturas.t_fact, object: String(tipo) },
         ],
       };
       filters.push(filter);
