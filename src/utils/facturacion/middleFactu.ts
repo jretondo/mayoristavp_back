@@ -33,7 +33,6 @@ const factuMiddel = () => {
     try {
       req.body.timer = Number(new Date());
       const body: dataFact = req.body.dataFact;
-      console.log('dataFact', body);
       let user: IUser = req.body.user;
       const pvId = body.pv_id;
       const pvData: Array<INewPV> = await ptosVtaController.get(pvId);
@@ -89,11 +88,12 @@ const factuMiddel = () => {
       if (variosPagos && body.variosPagos.length > 0) {
         let totalPagos = 0;
         body.variosPagos.forEach((prod) => {
-          totalPagos += prod.importe;
+          totalPagos += roundNumber(prod.importe);
         });
         if (totalPagos.toFixed(2) !== productsList.totalFact.toFixed(2)) {
           console.log('totalPagos', totalPagos.toFixed(2));
           console.log('totalFact', productsList.totalFact.toFixed(2));
+          console.log('dataFact', body);
           throw new Error('La suma de los pagos no coincide con el total');
         }
       }
@@ -284,16 +284,14 @@ const calcProdLista = (
       };
 
       factura.listaProd.push(newProdFact);
-      factura.totalFact =
-        Math.round((factura.totalFact + totalProd) * 100) / 100;
-      factura.totalIva = factura.totalIva + totalIva;
-      factura.totalNeto = factura.totalNeto + totalNeto;
-      factura.totalCosto =
-        Math.round((factura.totalCosto + totalCosto) * 100) / 100;
+      factura.totalFact = factura.totalFact + roundNumber(totalProd);
+      factura.totalIva = factura.totalIva + roundNumber(totalIva);
+      factura.totalNeto = factura.totalNeto + roundNumber(totalNeto);
+      factura.totalCosto = factura.totalCosto + roundNumber(totalCosto);
 
       if (key === productsList.length - 1) {
-        factura.totalIva = Math.round(factura.totalIva * 100) / 100;
-        factura.totalNeto = Math.round(factura.totalNeto * 100) / 100;
+        factura.totalIva = roundNumber(factura.totalIva);
+        factura.totalNeto = roundNumber(factura.totalNeto);
         resolve(factura);
       }
     });
