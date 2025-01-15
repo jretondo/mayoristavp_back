@@ -33,6 +33,7 @@ const factuMiddel = () => {
     try {
       req.body.timer = Number(new Date());
       const body: dataFact = req.body.dataFact;
+      console.log('dataFact', body);
       let user: IUser = req.body.user;
       const pvId = body.pv_id;
       const pvData: Array<INewPV> = await ptosVtaController.get(pvId);
