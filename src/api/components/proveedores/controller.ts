@@ -108,9 +108,17 @@ export = (injectedStore: typeof StoreType) => {
     next: NextFunction,
   ) => {
     const result: INewInsert = await store.insert(Tables.FACTURAS, newFact);
-
+    console.log(pagos);
     if (result.affectedRows > 0) {
       pagos.map(async (pago) => {
+        if (pago.tipo === 6) {
+          pago.id_cheque &&
+            (await store.update(
+              Tables.FORMAS_PAGO,
+              { estado: 4, id_fact_pago: result.insertId },
+              pago.id_cheque,
+            ));
+        }
         await store.insert(Tables.FORMAS_PAGO, {
           id_fact: result.insertId,
           tipo: pago.tipo,

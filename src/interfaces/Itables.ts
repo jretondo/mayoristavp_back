@@ -153,6 +153,7 @@ export interface IFormasPago {
   banco: string;
   nro_cheque: string;
   notas: string;
+  id_cheque?: number;
 }
 
 export interface ICodigoAprobacion {

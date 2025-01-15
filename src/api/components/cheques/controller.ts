@@ -28,6 +28,11 @@ export = (injectedStore: typeof StoreType) => {
         items: [{ column: Columns.formasPago.tipo, object: String(6) }],
       },
       {
+        mode: EModeWhere.higher,
+        concat: EConcatWhere.and,
+        items: [{ column: Columns.formasPago.importe, object: String(0) }],
+      },
+      {
         mode: EModeWhere.strict,
         concat: EConcatWhere.and,
         items: [
@@ -120,6 +125,7 @@ export = (injectedStore: typeof StoreType) => {
         [join],
         order,
       );
+      console.log(data);
       return {
         data,
       };
