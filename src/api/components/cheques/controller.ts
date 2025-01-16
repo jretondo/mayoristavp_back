@@ -125,7 +125,7 @@ export = (injectedStore: typeof StoreType) => {
         [join],
         order,
       );
-      console.log(data);
+
       return {
         data,
       };
@@ -188,11 +188,13 @@ export = (injectedStore: typeof StoreType) => {
       [join],
     );
 
-    const ids = data.map((item: IFormasPago) => item.id);
+    const ids: number[] = data.map((item: IFormasPago) => item.id);
 
     const updated =
-      ids.lenght > 0 &&
-      (await store.update(Tables.FORMAS_PAGO, { estado: 3 }, ids));
+      ids.length > 0 &&
+      ids.map(async (id) => {
+        await store.update(Tables.FORMAS_PAGO, { estado: 3 }, id);
+      });
 
     return { data, updated };
   };

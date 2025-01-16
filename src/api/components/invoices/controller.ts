@@ -319,6 +319,10 @@ export = (injectedStore: typeof StoreType) => {
     return await store.get(Tables.FACTURAS, id);
   };
 
+  const getDetail = async (id: number) => {
+    return await store.get(Tables.DET_FACTURAS, id);
+  };
+
   const remove = async (id: number) => {
     return await store.remove(Tables.FACTURAS, { id });
   };
@@ -378,13 +382,6 @@ export = (injectedStore: typeof StoreType) => {
             values.push(item.precio_ind);
             values.push(item.descuento_porcentaje);
             rowsvalues.push(values);
-            if (item.total_prod < 0) {
-              await store.update(
-                Tables.DET_FACTURAS,
-                { anulada: true },
-                item.id || 0,
-              );
-            }
             if (key === newDetFact.length - 1) {
               resolve(rowsvalues);
             }
@@ -541,6 +538,9 @@ export = (injectedStore: typeof StoreType) => {
       notas: string;
     }>,
     next: NextFunction,
+    parcial?: boolean,
+    originalDetFact?: Array<IDetFactura>,
+    newItems?: { id: number; cant_prod: number }[],
   ) => {
     const resultInsert = await insertFact(
       pvData.id || 0,
@@ -548,39 +548,18 @@ export = (injectedStore: typeof StoreType) => {
       productsList,
       factFiscal,
     );
-    const clienteArray: { data: Array<IClientes> } = await controller.list(
-      undefined,
-      String(newFact.n_doc_cliente),
-      undefined,
-    );
 
-    if (clienteArray.data.length === 0) {
-      if (
-        String(newFact.n_doc_cliente).length < 12 &&
-        String(newFact.n_doc_cliente).length > 6
-      ) {
-        let esDni = false;
-        if (String(newFact.n_doc_cliente).length < 10) {
-          esDni = true;
+    if (parcial) {
+      newItems?.map(async (item) => {
+        const itemFind = originalDetFact?.find((i) => i.id === item.id);
+        if (itemFind) {
+          await store.update(
+            Tables.DET_FACTURAS,
+            { cant_anulada: itemFind.cant_anulada + item.cant_prod },
+            item.id,
+          );
         }
-        const newClient: IClientes = {
-          cuit: esDni,
-          ndoc: String(newFact.n_doc_cliente),
-          razsoc: newFact.raz_soc_cliente,
-          telefono: '',
-          email: newFact.email_cliente,
-          cond_iva: newFact.cond_iva_cliente,
-          direccion: '',
-          entrega: '',
-          provincia: '',
-          localidad: '',
-        };
-        try {
-          await ControllerClientes.upsert(newClient, next);
-        } catch (error) {
-          console.log('error :>> ', error);
-        }
-      }
+      });
     }
 
     await newmovCtaCte(
@@ -615,7 +594,7 @@ export = (injectedStore: typeof StoreType) => {
       });
     }
 
-    if (newFact.id_fact_asoc !== 0) {
+    if (newFact.id_fact_asoc !== 0 && !parcial) {
       await store.update(
         Tables.FACTURAS,
         { id_fact_asoc: resultInsert.msg.factId },
@@ -755,10 +734,7 @@ export = (injectedStore: typeof StoreType) => {
         mode: EModeWhere.strict,
         concat: EConcatWhere.and,
         items: !all
-          ? [
-              { column: Columns.detallesFact.fact_id, object: String(idFact) },
-              { column: Columns.detallesFact.anulada, object: String(0) },
-            ]
+          ? [{ column: Columns.detallesFact.fact_id, object: String(idFact) }]
           : [{ column: Columns.detallesFact.fact_id, object: String(idFact) }],
       },
     ];
@@ -862,5 +838,6 @@ export = (injectedStore: typeof StoreType) => {
     getDetFact,
     codigoVerificacionDescuento,
     verificaCodigo,
+    getDetail,
   };
 };

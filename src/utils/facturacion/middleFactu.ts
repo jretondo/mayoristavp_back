@@ -281,6 +281,7 @@ const calcProdLista = (
         total_neto: roundNumber(totalNeto),
         precio_ind: dataProd[0].vta_price,
         descuento_porcentaje: prod.descuento_porcentaje || 0,
+        cant_anulada: 0,
       };
 
       factura.listaProd.push(newProdFact);

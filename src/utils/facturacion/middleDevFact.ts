@@ -5,6 +5,7 @@ import moment from 'moment';
 import ControllerInvoices from '../../api/components/invoices';
 import ControllerPtoVta from '../../api/components/ptosVta';
 import { Conceptos, perIvaAlicuotas } from './AfipClass';
+import { roundNumber } from '../roundNumb';
 
 const devFactMiddle = () => {
   const middleware = async (
@@ -15,8 +16,8 @@ const devFactMiddle = () => {
     req.body.timer = Number(new Date());
     const idFact = req.body.id;
     const fecha = req.body.fecha;
-    const dataFact: Array<IFactura> = await ControllerInvoices.get(idFact);
-    const detFact: Array<IDetFactura> = await ControllerInvoices.getDetails(
+    let dataFact: Array<IFactura> = await ControllerInvoices.get(idFact);
+    let detFact: Array<IDetFactura> = await ControllerInvoices.getDetails(
       idFact,
     );
     const user: IUser = req.body.user;
@@ -27,6 +28,35 @@ const devFactMiddle = () => {
     let pagos: Array<IFormasPago> = await ControllerInvoices.getFormasPago(
       idFact,
     );
+
+    const parcial = req.body.parcial;
+    if (parcial) {
+      const items: Array<IItemsDevolucion> = req.body.items.filter(
+        (item: IItemsDevolucion) => item.cant_prod > 0,
+      );
+      const productsList = await calcProdLista(items);
+      req.body.originalDetFact = detFact;
+      detFact = productsList.listaProd;
+
+      dataFact[0].total_fact = productsList.totalFact;
+      dataFact[0].total_iva = productsList.totalIva;
+      dataFact[0].total_neto = productsList.totalNeto;
+      dataFact[0].total_compra = productsList.totalCosto;
+
+      pagos = req.body.variosPagos;
+
+      if (pagos && pagos.length > 0) {
+        let totalPagos = 0;
+        pagos.forEach((prod) => {
+          totalPagos += roundNumber(prod.importe);
+        });
+        if (totalPagos.toFixed(2) !== productsList.totalFact.toFixed(2)) {
+          console.log('totalPagos', totalPagos.toFixed(2));
+          console.log('totalFact', productsList.totalFact.toFixed(2));
+          throw new Error('La suma de los pagos no coincide con el total');
+        }
+      }
+    }
 
     if (pagos && pagos.length > 0) {
       pagos = pagos.map((item) => {
@@ -245,10 +275,92 @@ const listaIva = async (
   }
 };
 
+const calcProdLista = (
+  productsList: IItemsDevolucion[],
+): Promise<IfactCalc> => {
+  let dataAnt: IDetFactura[] = [];
+  let idAnt: number = 0;
+  productsList.sort((a, b) => {
+    return a.id - b.id;
+  });
+  return new Promise((resolve, reject) => {
+    let factura: IfactCalc = {
+      listaProd: [],
+      totalFact: 0,
+      totalIva: 0,
+      totalNeto: 0,
+      totalCosto: 0,
+    };
+    productsList.map(async (prod, key) => {
+      let dataProd: IDetFactura[] = [];
+      if (prod.id === idAnt) {
+        dataProd = dataAnt;
+      } else {
+        dataProd = await ControllerInvoices.getDetail(prod.id);
+      }
+      idAnt = prod.id;
+      dataAnt = dataProd;
+      const totalCantItem = dataProd[0].cant_prod;
+      const costoUnit = roundNumber(dataProd[0].total_costo / totalCantItem);
+      const netoUnit = roundNumber(dataProd[0].total_neto / totalCantItem);
+      const ivaUnit = roundNumber(dataProd[0].total_iva / totalCantItem);
+      const totalUnit = roundNumber(dataProd[0].total_prod / totalCantItem);
+
+      const totalCosto = costoUnit * prod.cant_prod;
+
+      const totalProd = totalUnit * prod.cant_prod;
+
+      const totalNeto = netoUnit * prod.cant_prod;
+
+      const totalIva = ivaUnit * prod.cant_prod;
+
+      const newProdFact: IDetFactura = {
+        nombre_prod: dataProd[0].nombre_prod,
+        cant_prod: prod.cant_prod,
+        unidad_tipo_prod: dataProd[0].unidad_tipo_prod,
+        id_prod: dataProd[0].id_prod,
+        total_prod: roundNumber(totalProd),
+        total_iva: roundNumber(totalIva),
+        alicuota_id: dataProd[0].alicuota_id,
+        total_costo: roundNumber(totalCosto),
+        total_neto: roundNumber(totalNeto),
+        precio_ind: dataProd[0].precio_ind,
+        descuento_porcentaje: dataProd[0].descuento_porcentaje || 0,
+        cant_anulada: 0,
+      };
+
+      factura.listaProd.push(newProdFact);
+      factura.totalFact = factura.totalFact + roundNumber(totalProd);
+      factura.totalIva = factura.totalIva + roundNumber(totalIva);
+      factura.totalNeto = factura.totalNeto + roundNumber(totalNeto);
+      factura.totalCosto = factura.totalCosto + roundNumber(totalCosto);
+
+      if (key === productsList.length - 1) {
+        factura.totalIva = roundNumber(factura.totalIva);
+        factura.totalNeto = roundNumber(factura.totalNeto);
+        resolve(factura);
+      }
+    });
+  });
+};
+
 interface IIvaItem {
   Id: AlicuotasIva;
   BaseImp: number;
   Importe: number;
+}
+
+interface IItemsDevolucion {
+  id: number;
+  cant_prod: number;
+}
+
+interface IfactCalc {
+  listaProd: Array<IDetFactura>;
+  totalFact: number;
+  totalIva: number;
+  totalNeto: number;
+  totalCosto: number;
 }
 
 export = devFactMiddle;

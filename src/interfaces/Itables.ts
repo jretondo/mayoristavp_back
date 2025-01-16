@@ -127,7 +127,7 @@ export interface IDetFactura {
   total_neto: number;
   alicuota_id: number;
   precio_ind: number;
-  anulada?: boolean;
+  cant_anulada: number;
   descuento_porcentaje: number;
 }
 

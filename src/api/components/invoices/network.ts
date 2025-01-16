@@ -73,6 +73,9 @@ const newInvoice = (req: Request, res: Response, next: NextFunction) => {
     req.body.user,
     req.body.variosPagos,
     next,
+    req.body.parcial,
+    req.body.originalDetFact,
+    req.body.items,
   )
     .then((dataFact) => {
       file(
