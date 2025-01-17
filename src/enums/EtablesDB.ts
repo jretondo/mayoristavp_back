@@ -226,6 +226,25 @@ enum Cheques {
   id_cliente = 'id_cliente',
 }
 
+enum Pedidos {
+  id = 'id',
+  fecha = 'fecha',
+  nombre = 'nombre',
+  apellido = 'apellido',
+  direccion = 'direccion',
+  ciudad = 'ciudad',
+  telefono = 'telefono',
+  email = 'email',
+  notas = 'notas',
+}
+
+enum PedidosItems {
+  id = 'id',
+  id_pedido = 'id_pedido',
+  id_prod = 'id_prod',
+  cant_prod = 'cant_prod',
+}
+
 export enum MetodosPago {
   efectivo = 0,
   mercaPago = 1,
@@ -256,6 +275,8 @@ export enum Tables {
   CODIGOS_APROBACION = 'codigo_aprobacion',
   HERO_SLIDER = 'hero_slider',
   CHEQUES = 'cheques',
+  PEDIDOS = 'pedidos',
+  PEDIDO_ITEMS = 'pedido_items',
 }
 
 export const Columns = {
@@ -277,4 +298,6 @@ export const Columns = {
   codigosAprobacion: CodigosAprobacion,
   heroSlider: HeroSlider,
   cheques: Cheques,
+  pedidos: Pedidos,
+  pedidosItems: PedidosItems,
 };

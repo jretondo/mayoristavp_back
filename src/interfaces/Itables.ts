@@ -173,3 +173,23 @@ export interface IHeroSlider {
   type: boolean;
   filesName?: Express.Multer.File[];
 }
+
+export interface IPedido {
+  id?: number;
+  fecha: Date;
+  nombre: string;
+  apellido: string;
+  direccion: string;
+  ciudad: string;
+  telefono: string;
+  email: string;
+  notas: string;
+  items?: IPedidoItem[];
+}
+
+export interface IPedidoItem {
+  id?: number;
+  id_pedido: number;
+  id_prod: number;
+  cant_prod: number;
+}

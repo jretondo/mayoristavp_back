@@ -63,7 +63,6 @@ handleCon();
 
 const insert = async (table: Tables, data: object): Promise<any> => {
   let query = ` INSERT INTO ${table} SET ? `;
-
   return new Promise((resolve, reject) => {
     connection.query(query, data, (err: Error, result: any) => {
       if (err) {
