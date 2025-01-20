@@ -30,7 +30,13 @@ export const invoicePDFMiddle = () => {
       const pvData: INewPV = req.body.pvData;
       const noPrice: boolean = Boolean(req.query.noPrice);
       const newFact: IFactura = req.body.newFact;
-      const productsList: Array<IDetFactura> = req.body.productsList;
+      let productsList: Array<IDetFactura> = req.body.productsList;
+      productsList.map((item) => {
+        return {
+          ...item,
+          cant_prod: Number(item.cant_prod),
+        };
+      });
       let variosPagos: { tipo: Number }[] = [];
       try {
         variosPagos = req.body.variosPagos.map((pago: IFormasPago) => {

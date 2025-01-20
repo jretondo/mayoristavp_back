@@ -24,7 +24,9 @@ export = (injectedStore: typeof StoreType) => {
 
     const items = await store.list(
       Tables.PEDIDO_ITEMS,
-      [`${Tables.PRODUCTS_PRINCIPAL}.*, ${Tables.PEDIDO_ITEMS}.cant_prod`],
+      [
+        `${Tables.PRODUCTS_PRINCIPAL}.*, ${Tables.PEDIDO_ITEMS}.${Columns.pedidosItems.cant_prod}, ${Tables.PEDIDO_ITEMS}.${Columns.pedidosItems.id_prod}`,
+      ],
       [
         {
           mode: EModeWhere.strict,
