@@ -23,6 +23,7 @@ import { NextFunction } from 'express';
 import controller from '../clientes';
 import { sendCode } from '../../../utils/sendEmails/sendCode';
 import moment from 'moment';
+import { roundNumber } from '../../../utils/roundNumb';
 
 export = (injectedStore: typeof StoreType) => {
   let store = injectedStore;
@@ -820,6 +821,60 @@ export = (injectedStore: typeof StoreType) => {
     }
   };
 
+  const putVariosPagos = async (
+    variosPagos: Array<{
+      tipo: MetodosPago;
+      tipo_txt: string;
+      importe: number;
+      fecha_emision: Date;
+      fecha_vencimiento: Date;
+      banco: string;
+      nro_cheque: string;
+      notas: string;
+    }>,
+    idFact: number,
+  ) => {
+    const originalFactura = await get(idFact);
+
+    const totalFactura: number = originalFactura[0].total_fact;
+    const totalPagos: number = variosPagos.reduce(
+      (acc, item) => acc + roundNumber(item.importe),
+      0,
+    );
+
+    if (totalFactura !== totalPagos) {
+      throw new Error(
+        'El total de los pagos no coincide con el total de la factura',
+      );
+    }
+
+    await store.remove(Tables.FORMAS_PAGO, { id_fact: idFact });
+    await store.remove(Tables.CTA_CTE, { id_factura: idFact });
+
+    return variosPagos.map(async (item) => {
+      const dataForma: IFormasPago = {
+        id_fact: idFact,
+        tipo: item.tipo,
+        importe: item.importe,
+        tipo_txt: item.tipo_txt,
+        fecha_emision: item.fecha_emision,
+        fecha_vencimiento: item.fecha_vencimiento,
+        banco: item.banco,
+        nro_cheque: item.nro_cheque,
+        notas: item.notas,
+      };
+      if (Number(item.tipo) === 4) {
+        await newmovCtaCte(
+          item.tipo,
+          item.importe,
+          originalFactura[0].n_doc_cliente,
+          idFact,
+        );
+      }
+      return await store.insert(Tables.FORMAS_PAGO, dataForma);
+    });
+  };
+
   return {
     lastInvoice,
     list,
@@ -839,5 +894,6 @@ export = (injectedStore: typeof StoreType) => {
     codigoVerificacionDescuento,
     verificaCodigo,
     getDetail,
+    putVariosPagos,
   };
 };

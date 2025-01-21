@@ -240,6 +240,14 @@ const verificaCodigoDescuento = (
     .catch(next);
 };
 
+const putVariosPagos = (req: Request, res: Response, next: NextFunction) => {
+  Controller.putVariosPagos(req.body.variosPagos, Number(req.params.idFact))
+    .then((data) => {
+      success({ req, res, message: data });
+    })
+    .catch(next);
+};
+
 router
   .get('/details/:id', secure(EPermissions.ventas), get)
   .get('/cajaList/:page', secure(EPermissions.ventas), cajaList)
@@ -288,6 +296,7 @@ router
     newInvoice,
   )
   .delete('/:id', secure(EPermissions.ventas), remove)
-  .put('/paytype/:id', secure(EPermissions.ventas), changePayType);
+  .put('/paytype/:id', secure(EPermissions.ventas), changePayType)
+  .put('/variosPagos/:idFact', secure(EPermissions.ventas), putVariosPagos);
 
 export = router;
