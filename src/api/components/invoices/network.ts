@@ -248,6 +248,14 @@ const putVariosPagos = (req: Request, res: Response, next: NextFunction) => {
     .catch(next);
 };
 
+const resetTokenAfip = (req: Request, res: Response, next: NextFunction) => {
+  Controller.resetTokenAfip()
+    .then((data) => {
+      success({ req, res, message: data });
+    })
+    .catch(next);
+};
+
 router
   .get('/details/:id', secure(EPermissions.ventas), get)
   .get('/cajaList/:page', secure(EPermissions.ventas), cajaList)
@@ -297,6 +305,7 @@ router
   )
   .delete('/:id', secure(EPermissions.ventas), remove)
   .put('/paytype/:id', secure(EPermissions.ventas), changePayType)
-  .put('/variosPagos/:idFact', secure(EPermissions.ventas), putVariosPagos);
+  .put('/variosPagos/:idFact', secure(EPermissions.ventas), putVariosPagos)
+  .put('/resetTokenAfip', secure(EPermissions.ventas), resetTokenAfip);
 
 export = router;

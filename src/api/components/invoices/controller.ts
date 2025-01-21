@@ -17,13 +17,14 @@ import { Ipages, IWhereParams, IJoin } from 'interfaces/Ifunctions';
 import { IClientes, IDetFactura, IFactura, IUser } from 'interfaces/Itables';
 import { INewPV } from 'interfaces/Irequests';
 import ControllerStock from '../stock';
-import ControllerClientes from '../clientes';
 import fs from 'fs';
 import { NextFunction } from 'express';
 import controller from '../clientes';
 import { sendCode } from '../../../utils/sendEmails/sendCode';
 import moment from 'moment';
 import { roundNumber } from '../../../utils/roundNumb';
+import { staticFolders } from '../../../enums/EStaticFiles';
+import path from 'path';
 
 export = (injectedStore: typeof StoreType) => {
   let store = injectedStore;
@@ -875,6 +876,26 @@ export = (injectedStore: typeof StoreType) => {
     });
   };
 
+  const resetTokenAfip = async () => {
+    const tokenFolder = staticFolders.tokenAfip;
+    fs.readdir(tokenFolder, (err, files) => {
+      if (err) {
+        console.log('err :>> ', err);
+      }
+      for (const file of files) {
+        fs.unlink(path.join(tokenFolder, file), (err) => {
+          if (err) {
+            console.log('err :>> ', err);
+          }
+        });
+      }
+    });
+    return {
+      status: 200,
+      msg: 'Token reseteado',
+    };
+  };
+
   return {
     lastInvoice,
     list,
@@ -895,5 +916,6 @@ export = (injectedStore: typeof StoreType) => {
     verificaCodigo,
     getDetail,
     putVariosPagos,
+    resetTokenAfip,
   };
 };
