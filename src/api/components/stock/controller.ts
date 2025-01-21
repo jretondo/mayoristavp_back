@@ -373,7 +373,7 @@ export = (injectedStore: typeof StoreType) => {
         concat: EConcatWhere.and,
         items: [
           {
-            column: `${Tables.STOCK}.${Columns.stock.id_prod}`,
+            column: `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.id}`,
             object: String(prodId),
           },
         ],
@@ -413,7 +413,7 @@ export = (injectedStore: typeof StoreType) => {
         concat: EConcatWhere.and,
         items: [
           {
-            column: `${Tables.STOCK}.${Columns.stock.category}`,
+            column: `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.category}`,
             object: String(cat),
           },
         ],
@@ -426,7 +426,7 @@ export = (injectedStore: typeof StoreType) => {
         concat: EConcatWhere.and,
         items: [
           {
-            column: `${Tables.STOCK}.${Columns.stock.sub_category}`,
+            column: `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.subcategory}`,
             object: String(subCat),
           },
         ],
