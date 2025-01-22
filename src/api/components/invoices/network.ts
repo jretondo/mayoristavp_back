@@ -90,6 +90,26 @@ const newInvoice = (req: Request, res: Response, next: NextFunction) => {
     .catch(next);
 };
 
+const newOrder = (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const dataFact = {
+      fileName: req.body.fileName,
+      filePath: req.body.filePath,
+      resultInsert: req.body.orderId,
+    };
+    file(
+      req,
+      res,
+      dataFact.filePath,
+      'application/pdf',
+      dataFact.fileName,
+      dataFact,
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
 const getDataFactPDF = (req: Request, res: Response, next: NextFunction) => {
   if (req.query.sendEmail) {
     success({ req, res });
@@ -293,6 +313,15 @@ router
     invoicePDFMiddle(),
     sendFactMiddle(),
     newInvoice,
+  )
+  .post(
+    '/orderPDF',
+    secure(EPermissions.ventas),
+    factuMiddel(),
+    fiscalMiddle(),
+    invoicePDFMiddle(),
+    sendFactMiddle(),
+    newOrder,
   )
   .post(
     '/',

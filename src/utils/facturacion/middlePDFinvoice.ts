@@ -30,6 +30,7 @@ export const invoicePDFMiddle = () => {
       const pvData: INewPV = req.body.pvData;
       const noPrice: boolean = Boolean(req.query.noPrice);
       const newFact: IFactura = req.body.newFact;
+      const orderId = req.body.orderId;
       let productsList: Array<IDetFactura> = req.body.productsList;
       productsList.map((item) => {
         return {
@@ -274,6 +275,9 @@ export const invoicePDFMiddle = () => {
       };
       const listaItems = productsList;
 
+      const maxItemsPorPagina = 50;
+      const paginasItems = dividirEnPaginas(listaItems, maxItemsPorPagina);
+
       const datos2 = {
         myCss: `<style>${myCss}</style>`,
         listaItems,
@@ -286,6 +290,9 @@ export const invoicePDFMiddle = () => {
         ...cliente,
         ...totales,
         ...footer,
+        paginasItems: paginasItems,
+        totalPaginas: paginasItems.length,
+        orderId,
       };
 
       let ejsPath = 'Factura.ejs';
@@ -343,3 +350,11 @@ export const invoicePDFMiddle = () => {
   };
   return middleware;
 };
+
+function dividirEnPaginas(items: IDetFactura[], maxItemsPorPagina: number) {
+  const paginas = [];
+  for (let i = 0; i < items.length; i += maxItemsPorPagina) {
+    paginas.push(items.slice(i, i + maxItemsPorPagina));
+  }
+  return paginas;
+}

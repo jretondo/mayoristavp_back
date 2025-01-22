@@ -10,7 +10,10 @@
 </head>
 
 <body>
+  <% paginasItems.forEach((pagina, index) => { %>
+    <div class="pagina">
   <%- myCss %>
+  <div class="contenido">
     <header class="clearfix">
       <div id="logo">
         <img src="<%- logo %> ">
@@ -27,7 +30,8 @@
           TEL.: 3512655464
         </div>
       </div>
-      <div style="position: absolute;text-align: center;width: 100%;">
+      <div style="position: absolute;text-align: center;width: 100%;">      
+          <span>Página <%- parseInt(index) + 1 %> de <%- totalPaginas %></span>
         <h2 class="name">ORIGINAL</h2>
         <div
           style="width: 80px;height: 80px;background: #80808061;margin: auto;border: 4px solid black;margin-top: 20px;">
@@ -37,10 +41,16 @@
           <span>NO FISCAL</span>
         </div>
       </div>
-      <div id="company" style="margin-top: 21px;text-align: left;">
-        <h2 class="name" style="margin-bottom: 10px;">FACTURA Nº: <span >
-            <%- factNro %>
-          </span></h2>
+      <div id="company" style="margin-top: 21px;text-align: left;">       
+          <% if(orderId){ %>
+            <h2 class="name" style="margin-bottom: 10px;">ORDEN Nº: <span >
+              <%- orderId %>
+            </span></h2>
+              <% } else {%>
+                <h2 class="name" style="margin-bottom: 10px;">FACTURA Nº: <span >
+                  <%- factNro %>
+                </span></h2>
+                <% } %>
         <h2 class="name" style="margin-bottom: 10px;">FECHA: <span >
             <%- fechaFact %>
           </span></h2>
@@ -54,10 +64,9 @@
             <%- iniAct %>
           </span></div>
       </div>
-      </div>
+      </div>    
     </header>
-    <main>
-
+    <main>     
       <div id="details" class="clearfix">
         <% if(clienteNro===99999999){ %>
           <div id="client">
@@ -143,7 +152,7 @@
           </tr>
         </thead>
         <tbody>
-          <% listaItems.forEach(function(item){ %>
+          <% pagina.forEach(function(item){ %>
             <%- include('./ItemFactNoFiscal.ejs', { itemName: upperCase(item.nombre_prod), itemPrice: item.precio_ind, itemCant:
               item.cant_prod, itemTotal: item.total_prod, tipoUn: item.unidad_tipo_prod, noPrice, itemDescuento: item.descuento_porcentaje}); %>
               <% }); %>
@@ -151,41 +160,49 @@
         <tfoot>
         </tfoot>
       </table>
-    </main>
-    <footer>
-      <table border="0" cellspacing="0" cellpadding="0">
-        <thead>
-          <tr>
-            <th style="border: 1px solid white;" class="total">SUB-TOTAL: <%- formatoPrecio(subTotalNoFiscal) %>
-            </th>
-            <th style="border: 1px solid white;" class="total">
-              DESC.: <%- formatoPrecio(totalDesc) %>
-            </th>
-            <th style="border: 1px solid white;" class="total" style="font-size: 1.2em;">TOTAL: $<%-
-                totalFact %>
-            </th>
-          </tr>
-        </thead>
-      </table>
-      <div style="width: 100%;border-top: 2px solid #AAAAAA;margin-top: 10px;margin-bottom: 10px;"></div>
-
-      <div style="width: 40%">
-        <div style="position: absolute;left: 0%;">
-          <span style="margin-top: 5px;margin-bottom: 5px;font-size: 13px;">
-            VENDEDOR:
-          </span>
-          <span style="margin-top: 5px;margin-bottom: 5px;font-size: 13px;">
-            <%- upperCase(vendedor) %>
+    </main>   
+    <%       
+      const extraMargin = 900 - pagina.length * 20;
+    %>
+    <% if (index === totalPaginas - 1) { %>
+      <footer class="footer-final" style="margin-top: <%= extraMargin %>px;">
+        <table border="0" cellspacing="0" cellpadding="0">
+          <thead>
+            <tr>
+              <th style="border: 1px solid white;" class="total">SUB-TOTAL: <%- formatoPrecio(subTotalNoFiscal) %>
+              </th>
+              <th style="border: 1px solid white;" class="total">
+                DESC.: <%- formatoPrecio(totalDesc) %>
+              </th>
+              <th style="border: 1px solid white;" class="total" style="font-size: 1.2em;">TOTAL: $<%- totalFact %>
+              </th>
+            </tr>
+          </thead>
+        </table>
+        <div style="width: 100%;border-top: 2px solid #AAAAAA;margin-top: 10px;margin-bottom: 10px;"></div>
+        <div style="width: 40%">
+          <div style="position: absolute;left: 0%;">
+            <span style="margin-top: 5px;margin-bottom: 5px;font-size: 13px;">
+              VENDEDOR:
+            </span>
+            <span style="margin-top: 5px;margin-bottom: 5px;font-size: 13px;">
+              <%- upperCase(vendedor) %>
+            </span>
+          </div>
+        </div>
+        <div style="width: 50%;position: absolute;right: 0;text-align: left;">
+          <span style="margin-top: 5px; margin-bottom: 5px;text-align: right;font-size: 13px;">
+            NO VÁLIDO COMO COMPROBANTE FISCAL
           </span>
         </div>
-      </div>
-      <div style="width: 50%;position: absolute;right: 0;text-align: left;">
-        <span style="margin-top: 5px; margin-bottom: 5px;text-align: right;font-size: 13px;">NO VÁLIDO COMO COMPROBANTE FISCAL
-        </span>
-      </div>
-      </div>
-      </div>
-    </footer>
+      </footer>
+    <% } %> 
+  </div>
+    <% if (index < paginasItems.length - 1) { %>
+      <div style="page-break-after: always;"></div>
+    <% } %>
+  </div>
+  <% }); %>
 </body>
 
 </html>
