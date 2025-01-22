@@ -203,7 +203,7 @@ export = (injectedStore: typeof StoreType) => {
         Columns.prodPrincipal.subcategory,
         Columns.prodPrincipal.name,
       ],
-      asc: false,
+      asc: true,
     };
     const joinQuery: IJoin = {
       table: Tables.STOCK,
