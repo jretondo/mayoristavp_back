@@ -198,8 +198,12 @@ export = (injectedStore: typeof StoreType) => {
 
   const publicList = async () => {
     const order: Iorder = {
-      columns: [Columns.prodPrincipal.subcategory, Columns.prodPrincipal.name],
-      asc: true,
+      columns: [
+        Columns.prodPrincipal.family,
+        Columns.prodPrincipal.subcategory,
+        Columns.prodPrincipal.name,
+      ],
+      asc: false,
     };
     const joinQuery: IJoin = {
       table: Tables.STOCK,
