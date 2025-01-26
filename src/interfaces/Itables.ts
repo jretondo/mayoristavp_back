@@ -111,6 +111,7 @@ export interface IFactura {
   telefono: string;
   localidad: string;
   provincia: string;
+  cat_pago: string;
 }
 
 export interface IDetFactura {
@@ -192,4 +193,9 @@ export interface IPedidoItem {
   id_pedido: number;
   id_prod: number;
   cant_prod: number;
+}
+
+export interface ICategoriaPago {
+  id?: string;
+  categoria: string;
 }

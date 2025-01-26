@@ -153,6 +153,7 @@ enum Facturas {
   id_fact_asoc = 'id_fact_asoc',
   create_time = 'create_time',
   det_rbo = 'det_rbo',
+  cat_pago = 'cat_pago',
 }
 
 enum DetalleFact {
@@ -245,6 +246,11 @@ enum PedidosItems {
   cant_prod = 'cant_prod',
 }
 
+enum CategoriaPago {
+  id = 'id',
+  categoria = 'categoria',
+}
+
 export enum MetodosPago {
   efectivo = 0,
   mercaPago = 1,
@@ -277,6 +283,7 @@ export enum Tables {
   CHEQUES = 'cheques',
   PEDIDOS = 'pedidos',
   PEDIDO_ITEMS = 'pedido_items',
+  CATEGORIA_PAGO = 'categoria_pago',
 }
 
 export const Columns = {
@@ -300,4 +307,5 @@ export const Columns = {
   cheques: Cheques,
   pedidos: Pedidos,
   pedidosItems: PedidosItems,
+  categoriaPago: CategoriaPago,
 };

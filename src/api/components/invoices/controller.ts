@@ -896,6 +896,14 @@ export = (injectedStore: typeof StoreType) => {
     };
   };
 
+  const getCategoriasPago = async () => {
+    return await store.list(Tables.CATEGORIA_PAGO, ['*']);
+  };
+
+  const newCategoreiaPago = async (categoria: string) => {
+    return await store.insert(Tables.CATEGORIA_PAGO, { categoria });
+  };
+
   return {
     lastInvoice,
     list,
@@ -917,5 +925,7 @@ export = (injectedStore: typeof StoreType) => {
     getDetail,
     putVariosPagos,
     resetTokenAfip,
+    getCategoriasPago,
+    newCategoreiaPago,
   };
 };

@@ -82,6 +82,7 @@ const paymentMiddle = () => {
         telefono: clienteData[0].telefono || '',
         localidad: clienteData[0].localidad || '',
         provincia: clienteData[0].provincia || '',
+        cat_pago: '',
       };
 
       req.body.newFact = newFact;

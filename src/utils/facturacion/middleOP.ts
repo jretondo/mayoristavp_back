@@ -91,6 +91,7 @@ const OPMiddle = () => {
         telefono: proveedorData[0].telefono || '',
         localidad: '',
         provincia: '',
+        cat_pago: req.body.cat_pago,
       };
 
       req.body.newFact = newFact;

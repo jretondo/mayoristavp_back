@@ -127,6 +127,7 @@ const devFactMiddle = () => {
       telefono: dataFact[0].telefono || '',
       localidad: dataFact[0].localidad || '',
       provincia: dataFact[0].provincia || '',
+      cat_pago: '',
     };
     let newDet: Array<IDetFactura> = [];
 

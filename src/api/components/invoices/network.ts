@@ -276,6 +276,23 @@ const resetTokenAfip = (req: Request, res: Response, next: NextFunction) => {
     .catch(next);
 };
 
+const getCategoriasPago = (req: Request, res: Response, next: NextFunction) => {
+  Controller.getCategoriasPago()
+    .then((data) => {
+      console.log('data :>> ', data);
+      success({ req, res, message: data });
+    })
+    .catch(next);
+};
+
+const newCategoreiaPago = (req: Request, res: Response, next: NextFunction) => {
+  Controller.newCategoreiaPago(req.body.categoria)
+    .then((data) => {
+      success({ req, res, message: data });
+    })
+    .catch(next);
+};
+
 router
   .get('/details/:id', secure(EPermissions.ventas), get)
   .get('/cajaList/:page', secure(EPermissions.ventas), cajaList)
@@ -292,6 +309,7 @@ router
   .get('/detFact/:id', secure(EPermissions.ventas), detFact)
   .get('/dummy', secure(EPermissions.ventas), getDummy)
   .get('/timeout', secure(EPermissions.ventas), timeoutProuf)
+  .get('/categoriasPago', secure(EPermissions.ventas), getCategoriasPago)
   .get('/afipData', secure(EPermissions.ventas), getFiscalDataInvoice)
   .get('/:page', secure(EPermissions.ventas), list)
   .post('/codigoDescuento', secure(EPermissions.ventas), generarCodDescuento)
@@ -332,6 +350,7 @@ router
     sendFactMiddle(),
     newInvoice,
   )
+  .post('/categoriasPago', secure(EPermissions.ventas), newCategoreiaPago)
   .delete('/:id', secure(EPermissions.ventas), remove)
   .put('/paytype/:id', secure(EPermissions.ventas), changePayType)
   .put('/variosPagos/:idFact', secure(EPermissions.ventas), putVariosPagos)

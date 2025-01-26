@@ -195,6 +195,7 @@ const factuMiddelDevPart = () => {
         telefono: '',
         localidad: '',
         provincia: '',
+        cat_pago: '',
       };
 
       let newDet: Array<IDetFactura> = [];

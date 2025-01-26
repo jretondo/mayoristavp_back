@@ -92,8 +92,17 @@ export = (injectedStore: typeof StoreType) => {
     if (conID) {
       let data = await store.get(Tables.PRODUCTS_PRINCIPAL, idProd);
       data[0].id_prod = data[0].id;
+
+      if (stock) {
+        data = data.map(async (item: any) => {
+          const stock = await StockController.getStockProd(item.id_prod);
+          item.stock = stock;
+          return item;
+        });
+      }
+
       return {
-        data,
+        data: await Promise.all(data),
       };
     } else {
       const groupBy: Array<string> = [

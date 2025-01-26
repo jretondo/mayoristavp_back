@@ -179,6 +179,7 @@ const factuMiddel = () => {
         telefono: (clienteData.length > 0 && clienteData[0].telefono) || '',
         localidad: (clienteData.length > 0 && clienteData[0].localidad) || '',
         provincia: (clienteData.length > 0 && clienteData[0].provincia) || '',
+        cat_pago: '',
       };
 
       let ivaList: Array<IIvaItem> = [];

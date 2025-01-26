@@ -7,6 +7,7 @@ import {
 import { Tables, Columns } from '../../../enums/EtablesDB';
 import StoreType from '../../../store/mysql';
 import { IPedido } from '../../../interfaces/Itables';
+import StockController from '../stock';
 
 export = (injectedStore: typeof StoreType) => {
   let store = injectedStore;
@@ -22,7 +23,7 @@ export = (injectedStore: typeof StoreType) => {
       },
     ];
 
-    const items = await store.list(
+    let items = await store.list(
       Tables.PEDIDO_ITEMS,
       [
         `${Tables.PRODUCTS_PRINCIPAL}.*, ${Tables.PEDIDO_ITEMS}.${Columns.pedidosItems.cant_prod}, ${Tables.PEDIDO_ITEMS}.${Columns.pedidosItems.id_prod}`,
@@ -44,10 +45,16 @@ export = (injectedStore: typeof StoreType) => {
       join,
     );
 
+    items = items.map(async (item: any) => {
+      const stock = await StockController.getStockProd(item.id_prod);
+      item.stock = stock;
+      return item;
+    });
+
     return {
       data: {
         ...pedido,
-        items,
+        items: await Promise.all(items),
       },
     };
   };

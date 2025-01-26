@@ -20,6 +20,7 @@ export const paymentPDFMiddle = () => {
       const pvData: INewPV = req.body.pvData;
       const newFact: IFactura = req.body.newFact;
       let variosPagos = req.body.pagos;
+      const categoriasPago = newFact.cat_pago;
       let pagos = [];
 
       function base64_encode(file: any) {
@@ -190,6 +191,7 @@ export const paymentPDFMiddle = () => {
         ...totales,
         formaPago,
         ...footer,
+        categoriasPago,
       };
 
       const ejsPath = 'Recibo.ejs';
