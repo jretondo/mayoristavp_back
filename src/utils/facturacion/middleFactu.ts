@@ -175,7 +175,7 @@ const factuMiddel = () => {
         id_fact_asoc: 0,
         descuento: descuentoNumber,
         direccion_entrega:
-          (clienteData.length > 0 && clienteData[0].direccion) || '',
+          (clienteData.length > 0 && clienteData[0].entrega) || '',
         telefono: (clienteData.length > 0 && clienteData[0].telefono) || '',
         localidad: (clienteData.length > 0 && clienteData[0].localidad) || '',
         provincia: (clienteData.length > 0 && clienteData[0].provincia) || '',
