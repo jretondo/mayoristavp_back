@@ -69,13 +69,21 @@ const OPMiddle = () => {
         direccion_origen: pvData[0].direccion,
         raz_soc_origen: pvData[0].raz_soc,
         cond_iva_origen: pvData[0].cond_iva,
-        tipo_doc_cliente: Number(proveedorData[0].cuit) === 0 ? 80 : 96,
-        n_doc_cliente: Number(proveedorData[0].ndoc),
-        cond_iva_cliente: Number(proveedorData[0].cond_iva),
-        email_cliente: proveedorData[0].email,
+        tipo_doc_cliente:
+          proveedorData.length > 0
+            ? Number(proveedorData[0].cuit) === 0
+              ? 80
+              : 96
+            : 96,
+        n_doc_cliente:
+          proveedorData.length > 0 ? Number(proveedorData[0].ndoc) : 0,
+        cond_iva_cliente:
+          proveedorData.length > 0 ? Number(proveedorData[0].cond_iva) : 0,
+        email_cliente: proveedorData.length > 0 ? proveedorData[0].email : '',
         nota_cred: false,
         fiscal: false,
-        raz_soc_cliente: proveedorData[0].razsoc,
+        raz_soc_cliente:
+          proveedorData.length > 0 ? proveedorData[0].razsoc : '',
         user_id: user.id || 0,
         seller_name: `${user.nombre} ${user.apellido}`,
         total_fact: -Math.round(importe * 100) / 100,
@@ -88,7 +96,8 @@ const OPMiddle = () => {
         descuento: 0,
         det_rbo: detalle,
         direccion_entrega: '',
-        telefono: proveedorData[0].telefono || '',
+        telefono:
+          proveedorData.length > 0 ? proveedorData[0].telefono || '' : '',
         localidad: '',
         provincia: '',
         cat_pago: req.body.cat_pago,

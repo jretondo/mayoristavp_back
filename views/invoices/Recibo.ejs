@@ -68,7 +68,11 @@
           </div>
           <% }else { %>
             <div id="client">
-              <div class="to">CLIENTE:</div>
+              <% if (letra === "OP") { %>
+                <div class="to">PROVEDOR:</div>
+                <% } else { %>
+                  <div class="to">CLIENTE:</div>
+                  <% } %>
               <h2 class="name">
                 <%- upperCase(clienteName) %>
               </h2>
