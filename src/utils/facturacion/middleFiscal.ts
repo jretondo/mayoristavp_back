@@ -82,8 +82,9 @@ export const fiscalMiddle = () => {
     } catch (error) {
       console.error(error);
       console.log('dataFiscal :>> ', req.body.dataFiscal);
-      console.log('dataFiscal :>> ', req.body.dataFiscal.Iva);
+      console.log('dataFiscal IVA :>> ', req.body.dataFiscal.Iva);
       console.log('newFact :>> ', req.body.newFact);
+      console.log('productsList :>> ', req.body.productsList);
       next(new Error('Faltan datos o hay datos erroneos, controlelo!'));
     }
   };

@@ -209,13 +209,10 @@ const factuMiddel = () => {
           ImpTotConc: 0,
           ImpNeto:
             pvData[0].cond_iva === 1
-              ? Math.round(productsList.totalNeto * 100) / 100
-              : Math.round(productsList.totalFact * 100) / 100,
+              ? productsList.totalNeto
+              : productsList.totalFact,
           ImpOpEx: 0,
-          ImpIVA:
-            pvData[0].cond_iva === 1
-              ? Math.round(productsList.totalIva * 100) / 100
-              : 0,
+          ImpIVA: pvData[0].cond_iva === 1 ? productsList.totalIva : 0,
           ImpTrib: 0,
           Iva: pvData[0].cond_iva === 1 ? ivaList : null,
         };
