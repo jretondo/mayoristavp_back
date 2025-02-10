@@ -163,16 +163,14 @@ const factuMiddel = () => {
         raz_soc_cliente: body.cliente_id ? clienteData[0].razsoc : '',
         user_id: user.id || 0,
         seller_name: `${user.nombre} ${user.apellido}`,
-        total_fact: Math.round(productsList.totalFact * 100) / 100,
+        total_fact: roundNumber(productsList.totalFact),
         total_iva:
-          pvData[0].cond_iva === 1
-            ? Math.round(productsList.totalIva * 100) / 100
-            : 0,
+          pvData[0].cond_iva === 1 ? roundNumber(productsList.totalIva) : 0,
         total_neto:
           pvData[0].cond_iva === 1
-            ? Math.round(productsList.totalNeto * 100) / 100
-            : Math.round(productsList.totalFact * 100) / 100,
-        total_compra: Math.round(productsList.totalCosto * 100) / 100,
+            ? roundNumber(productsList.totalNeto)
+            : roundNumber(productsList.totalFact),
+        total_compra: roundNumber(productsList.totalCosto),
         forma_pago: body.forma_pago,
         pv_id: body.pv_id,
         id_fact_asoc: 0,
@@ -202,17 +200,18 @@ const factuMiddel = () => {
           DocTipo: body.cliente_id ? (clienteData[0].cuit ? 80 : 99) : 99,
           DocNro: body.cliente_id ? Number(clienteData[0].ndoc) : 0,
           CbteFch: moment(body.fecha, 'YYYY-MM-DD').format('YYYYMMDD'),
-          ImpTotal: Math.round(productsList.totalFact * 100) / 100,
+          ImpTotal: roundNumber(productsList.totalFact),
           MonCotiz: 1,
           MonId: 'PES',
           Concepto: Conceptos.Productos,
           ImpTotConc: 0,
           ImpNeto:
             pvData[0].cond_iva === 1
-              ? productsList.totalNeto
-              : productsList.totalFact,
+              ? roundNumber(productsList.totalNeto)
+              : roundNumber(productsList.totalFact),
           ImpOpEx: 0,
-          ImpIVA: pvData[0].cond_iva === 1 ? productsList.totalIva : 0,
+          ImpIVA:
+            pvData[0].cond_iva === 1 ? roundNumber(productsList.totalIva) : 0,
           ImpTrib: 0,
           Iva: pvData[0].cond_iva === 1 ? ivaList : null,
         };
@@ -319,9 +318,10 @@ const listaIva = async (
   if (listaProd.length > 0) {
     return new Promise((resolve, reject) => {
       listaProd.map((item, key) => {
-        let ivaAux = perIvaAlicuotas.find(
-          (e) => e.per === item.alicuota_id,
-        ) || { per: 0, id: 3 };
+        let ivaAux = perIvaAlicuotas.find((e) => e.id === item.alicuota_id) || {
+          per: 0,
+          id: 3,
+        };
         const iva = ivaAux.id;
         if (iva !== ivaAnt) {
           if (descuento > 0) {
