@@ -36,7 +36,10 @@ const factuMiddel = () => {
       let user: IUser = req.body.user;
       const pvId = body.pv_id;
       const pvData: Array<INewPV> = await ptosVtaController.get(pvId);
-      const productsList: IfactCalc = await calcProdLista(body.lista_prod);
+      const productsList: IfactCalc = await calcProdLista(
+        body.lista_prod,
+        Number(pvData[0].cond_iva),
+      );
       const fiscalBool = req.body.fiscal;
       const variosPagos = body.variosPagos;
       if (parseInt(fiscalBool) === 0) {
@@ -233,6 +236,7 @@ const factuMiddel = () => {
 
 const calcProdLista = (
   productsList: INewFactura['lista_prod'],
+  condIvaOrigen: number,
 ): Promise<IfactCalc> => {
   let dataAnt: Array<INewProduct> = [];
   let idAnt: number = 0;
@@ -247,6 +251,12 @@ const calcProdLista = (
       totalNeto: 0,
       totalCosto: 0,
     };
+    let ivaAlicuota = 0;
+    let alicuotaId = 0;
+    if (condIvaOrigen === 1) {
+      ivaAlicuota = 21;
+      alicuotaId = 5;
+    }
     productsList.map(async (prod, key) => {
       let dataProd: Array<INewProduct> = [];
       if (prod.id_prod === idAnt) {
@@ -266,9 +276,9 @@ const calcProdLista = (
         prod.cant_prod *
         (1 - (prod.descuento_porcentaje || 0) / 100);
 
-      const totalNeto = totalProd / (1 + dataProd[0].iva / 100);
+      const totalNeto = totalProd / (1 + ivaAlicuota / 100);
 
-      const totalIva = totalNeto * (dataProd[0].iva / 100);
+      const totalIva = totalNeto * (ivaAlicuota / 100);
 
       const newProdFact: IDetFactura = {
         nombre_prod: dataProd[0].name,
@@ -277,7 +287,7 @@ const calcProdLista = (
         id_prod: prod.id_prod,
         total_prod: roundNumber(totalProd),
         total_iva: roundNumber(totalIva),
-        alicuota_id: dataProd[0].iva,
+        alicuota_id: alicuotaId,
         total_costo: roundNumber(totalCosto),
         total_neto: roundNumber(totalNeto),
         precio_ind: dataProd[0].vta_price,
