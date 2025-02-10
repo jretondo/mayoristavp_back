@@ -275,7 +275,7 @@ export const invoicePDFMiddle = () => {
       };
       const listaItems = productsList;
 
-      const maxItemsPorPagina = 50;
+      const maxItemsPorPagina = 45;
       const paginasItems = dividirEnPaginas(listaItems, maxItemsPorPagina);
 
       const datos2 = {
