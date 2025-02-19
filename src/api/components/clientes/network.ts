@@ -105,6 +105,24 @@ const listCtaCteClient = (req: Request, res: Response, next: NextFunction) => {
     .catch(next);
 };
 
+const listCtaCte = (req: Request, res: Response, next: NextFunction) => {
+  Controller.listCtaCte(
+    Boolean(req.query.debit),
+    Boolean(req.query.credit),
+    req.query.cliente ? String(req.query.cliente) : undefined,
+    Number(req.params.page),
+  )
+    .then((lista) => {
+      success({
+        req,
+        res,
+        status: 200,
+        message: lista,
+      });
+    })
+    .catch(next);
+};
+
 const newPayment = (req: Request, res: Response, next: NextFunction) => {
   Controller.registerPayment(
     req.body.newFact,
@@ -156,6 +174,7 @@ const deletePayment = (req: Request, res: Response, next: NextFunction) => {
 
 router
   .get('/dataFiscal', secure(EPermissions.clientes), dataFiscalPadron)
+  .get('/ctaCte/all/:page', secure(EPermissions.clientes), listCtaCte)
   .get('/ctaCte/:page', secure(EPermissions.clientes), listCtaCteClient)
   .get('/details/:id', secure(EPermissions.clientes), get)
   .get(

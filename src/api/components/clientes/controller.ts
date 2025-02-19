@@ -1,4 +1,4 @@
-import { INewInsert } from './../../../interfaces/Ifunctions';
+import { IJoin, INewInsert } from './../../../interfaces/Ifunctions';
 import {
   IFactura,
   IFormasPago,
@@ -11,6 +11,7 @@ import {
   EConcatWhere,
   EModeWhere,
   ESelectFunct,
+  ETypesJoin,
 } from '../../../enums/EfunctMysql';
 import { Tables, Columns } from '../../../enums/EtablesDB';
 import StoreType from '../../../store/mysql';
@@ -245,6 +246,127 @@ export = (injectedStore: typeof StoreType) => {
     }
   };
 
+  const listCtaCte = async (
+    debit: boolean,
+    credit: boolean,
+    cliente?: string,
+    page?: number,
+    cantPerPage?: number,
+  ) => {
+    let filter: IWhereParams | undefined = undefined;
+    let filters: Array<IWhereParams> = [];
+
+    if (debit) {
+      filter = {
+        mode: EModeWhere.less,
+        concat: EConcatWhere.and,
+        items: [{ column: Columns.ctaCte.importe, object: String(0) }],
+      };
+      filters.push(filter);
+    } else if (credit) {
+      filter = {
+        mode: EModeWhere.higher,
+        concat: EConcatWhere.and,
+        items: [{ column: Columns.ctaCte.importe, object: String(0) }],
+      };
+      filters.push(filter);
+    }
+
+    if (cliente) {
+      filter = {
+        mode: EModeWhere.like,
+        concat: EConcatWhere.or,
+        items: [
+          {
+            column: `${Tables.CLIENTES}.${Columns.clientes.razsoc}`,
+            object: String(cliente),
+          },
+          {
+            column: `${Tables.CLIENTES}.${Columns.clientes.ndoc}`,
+            object: String(cliente),
+          },
+        ],
+      };
+      filters.push(filter);
+    }
+
+    let pages: Ipages;
+
+    const join: IJoin = {
+      table: Tables.CLIENTES,
+      colOrigin: Columns.ctaCte.id_cliente,
+      colJoin: Columns.clientes.id,
+      type: ETypesJoin.left,
+    };
+
+    if (page) {
+      pages = {
+        currentPage: page,
+        cantPerPage: cantPerPage || 10,
+        order: Columns.clientes.id,
+        asc: false,
+      };
+      const data = await store.list(
+        Tables.CTA_CTE,
+        [
+          `${Tables.CTA_CTE}.${Columns.ctaCte.id}`,
+          Columns.ctaCte.id_cliente,
+          Columns.ctaCte.id_factura,
+          Columns.ctaCte.id_recibo,
+          Columns.ctaCte.forma_pago,
+          Columns.ctaCte.importe,
+          Columns.ctaCte.detalle,
+          Columns.ctaCte.fecha,
+          Columns.clientes.razsoc,
+          Columns.clientes.ndoc,
+        ],
+        filters,
+        undefined,
+        pages,
+        [join],
+      );
+      const cant = await store.list(
+        Tables.CTA_CTE,
+        [`COUNT(${ESelectFunct.all}) AS COUNT`],
+        filters,
+        undefined,
+        undefined,
+        [join],
+      );
+      const suma = await store.list(
+        Tables.CTA_CTE,
+        [`SUM(${Columns.ctaCte.importe}) as SUMA`],
+        filters,
+        undefined,
+        undefined,
+        [join],
+      );
+      const pagesObj = await getPages(cant[0].COUNT, 10, Number(page));
+      return {
+        data,
+        pagesObj,
+        suma,
+      };
+    } else {
+      const data = await store.list(
+        Tables.CTA_CTE,
+        [ESelectFunct.all],
+        filters,
+        undefined,
+        undefined,
+      );
+      const suma = await store.list(
+        Tables.CTA_CTE,
+        [`SUM(${Columns.ctaCte.importe}) as SUMA`],
+        filters,
+      );
+      return {
+        data,
+        suma,
+      };
+    }
+  };
+
   const registerPayment = async (
     newFact: IFactura,
     fileName: string,
@@ -341,5 +463,6 @@ export = (injectedStore: typeof StoreType) => {
     registerPayment,
     getDataPayment,
     deletePayment,
+    listCtaCte,
   };
 };
