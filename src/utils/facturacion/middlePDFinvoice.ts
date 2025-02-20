@@ -317,16 +317,13 @@ export const invoicePDFMiddle = () => {
 
           const browser = await puppeteer.launch({
             args: ['--no-sandbox', '--disable-setuid-sandbox'],
+            timeout: 60000, // 60 segundos de timeout en el lanzamiento
+            protocolTimeout: 60000, // Aumenta el timeout del protocolo
             executablePath:
               process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
           });
           const page = await browser.newPage();
-          // guardar el html en un archivo
-          fs.writeFileSync(
-            path.join('public', 'invoices', 'temp.html'),
-            data,
-            'utf8',
-          );
+
           await page.setContent(data, { waitUntil: 'networkidle0' });
           await page.pdf({
             path: filePath,
