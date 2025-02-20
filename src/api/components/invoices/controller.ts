@@ -25,6 +25,7 @@ import moment from 'moment';
 import { roundNumber } from '../../../utils/roundNumb';
 import { staticFolders } from '../../../enums/EStaticFiles';
 import path from 'path';
+import { utils, writeFile } from 'xlsx';
 
 export = (injectedStore: typeof StoreType) => {
   let store = injectedStore;
@@ -141,6 +142,8 @@ export = (injectedStore: typeof StoreType) => {
     hasta: string,
     page?: number,
     cantPerPage?: number,
+    tipo?: string,
+    excel?: boolean,
   ): Promise<any> => {
     let filters: Array<IWhereParams> = [
       {
@@ -175,6 +178,15 @@ export = (injectedStore: typeof StoreType) => {
           items: [{ column: Columns.facturas.user_id, object: String(userId) }],
         },
       ];
+    }
+
+    if (tipo) {
+      const filter3: IWhereParams = {
+        mode: EModeWhere.strict,
+        concat: EConcatWhere.and,
+        items: [{ column: Columns.facturas.letra, object: tipo }],
+      };
+      filters.push(filter3);
     }
 
     const filter1: IWhereParams = {
@@ -308,7 +320,145 @@ export = (injectedStore: typeof StoreType) => {
           }, 2500);
         } catch (error) {}
         return cajaList;
-      } else {
+      } else if (excel) {
+        const dataDetails = await Promise.all(
+          data.map(async (item: any) => {
+            const pagos = await getFormasPago(item.id);
+            return {
+              ...item,
+              items: await getDetFact(item.id, true),
+              pagos: await Promise.all(pagos),
+            };
+          }),
+        );
+
+        const dataProcessedFactura = data.map((item: IFactura) => {
+          return {
+            Id: item.id,
+            Fecha: item.fecha,
+            'Tipo de Comprobante': item.letra,
+            'Punto de Venta': item.pv,
+            'N° Comprobante': item.cbte,
+            'Razón Social': item.raz_soc_cliente,
+            'N° Documento': item.n_doc_cliente,
+            'Total Neto': Number(item.total_neto) + Number(item.descuento),
+            'Descuento %': roundNumber(
+              (item.descuento /
+                (Number(item.total_neto) + Number(item.descuento))) *
+                100,
+            ),
+            'Descuento $': item.descuento,
+            'IVA Total': item.total_iva,
+            Total: item.total_fact,
+          };
+        });
+
+        function formaPagoTxt(id: number) {
+          switch (Number(id)) {
+            case 0:
+              return 'Efectivo';
+            case 1:
+              return 'Mercado Pago';
+            case 2:
+              return 'Débito';
+            case 3:
+              return 'Crédito';
+            case 4:
+              return 'Cuenta Corriente';
+            case 5:
+              return 'Varios';
+            case 6:
+              return 'Cheque';
+            case 7:
+              return 'Transferencia';
+            default:
+              return '';
+          }
+        }
+
+        let pagos: any[] = [];
+        let detalles: any[] = [];
+
+        dataDetails.map((item: IFactura) => {
+          item.pagos && item.pagos.length > 0
+            ? item.pagos.map((pago: IFormasPago) => {
+                pagos.push({
+                  Id: item.id,
+                  Fecha: item.fecha,
+                  'Tipo de Comprobante': item.letra,
+                  'Punto de Venta': item.pv,
+                  'N° Comprobante': item.cbte,
+                  'Razón Social': item.raz_soc_cliente,
+                  'N° Documento': item.n_doc_cliente,
+                  'Tipo de Pago': pago.tipo_txt,
+                  Importe: pago.importe,
+                });
+              })
+            : pagos.push({
+                Id: item.id,
+                Fecha: item.fecha,
+                'Tipo de Comprobante': item.letra,
+                'Punto de Venta': item.pv,
+                'N° Comprobante': item.cbte,
+                'Razón Social': item.raz_soc_cliente,
+                'N° Documento': item.n_doc_cliente,
+                'Tipo de Pago': formaPagoTxt(item.forma_pago),
+                Importe: item.total_fact,
+              });
+
+          item.items &&
+            item.items.length > 0 &&
+            item.items.map((detalle: IDetFactura) => {
+              detalles.push({
+                Id: item.id,
+                Fecha: item.fecha,
+                'Tipo de Comprobante': item.letra,
+                'Punto de Venta': item.pv,
+                'N° Comprobante': item.cbte,
+                'Razón Social': item.raz_soc_cliente,
+                'N° Documento': item.n_doc_cliente,
+                Producto: detalle.nombre_prod,
+                Cantidad: detalle.cant_prod,
+                'Precio Unitario': detalle.precio_ind,
+                'Total Neto': detalle.precio_ind * detalle.cant_prod,
+                'Descuento %': `${detalle.descuento_porcentaje}%`,
+                'Descuento $': roundNumber(
+                  (detalle.precio_ind *
+                    detalle.descuento_porcentaje *
+                    detalle.cant_prod) /
+                    100,
+                ),
+                Total: detalle.total_prod,
+              });
+            });
+        });
+
+        const workBook = utils.book_new();
+        const workSheet1 = utils.json_to_sheet(dataProcessedFactura);
+        const workSheet2 = utils.json_to_sheet(pagos);
+        const workSheet3 = utils.json_to_sheet(detalles);
+
+        utils.book_append_sheet(workBook, workSheet1, 'Facturas');
+        utils.book_append_sheet(workBook, workSheet2, 'Pagos');
+        utils.book_append_sheet(workBook, workSheet3, 'Detalles');
+        const uniqueSuffix = moment().format('YYYYMMDDHHmmss');
+        const excelAddress = path.join(
+          'public',
+          'reports',
+          uniqueSuffix + '-facturas.xlsx',
+        );
+        await writeFile(workBook, excelAddress);
+        setTimeout(() => {
+          fs.unlinkSync(excelAddress);
+        }, 2500);
+        return {
+          filePath: excelAddress,
+          contentType:
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          fileName: uniqueSuffix + '-facturas.xlsx',
+        };
+      }
+      {
         return {
           data,
           totales,

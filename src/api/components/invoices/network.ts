@@ -156,6 +156,7 @@ const cajaList = (req: Request, res: Response, next: NextFunction) => {
     String(req.query.hasta),
     Number(req.params.page),
     Number(req.query.cantPerPage),
+    req.query.tipo ? String(req.query.tipo) : undefined,
   )
     .then((lista: any) => {
       success({
@@ -175,6 +176,34 @@ const cajaListPDF = (req: Request, res: Response, next: NextFunction) => {
     Number(req.query.ptoVta),
     String(req.query.desde),
     String(req.query.hasta),
+    undefined,
+    undefined,
+    req.query.tipo ? String(req.query.tipo) : undefined,
+  )
+    .then((dataFact) => {
+      file(
+        req,
+        res,
+        dataFact.filePath,
+        'application/pdf',
+        dataFact.fileName,
+        dataFact,
+      );
+    })
+    .catch(next);
+};
+
+const cajaListExcel = (req: Request, res: Response, next: NextFunction) => {
+  Controller.cajaList(
+    false,
+    Number(req.query.userId),
+    Number(req.query.ptoVta),
+    String(req.query.desde),
+    String(req.query.hasta),
+    undefined,
+    undefined,
+    req.query.tipo ? String(req.query.tipo) : undefined,
+    true,
   )
     .then((dataFact) => {
       file(
@@ -297,6 +326,7 @@ router
   .get('/details/:id', secure(EPermissions.ventas), get)
   .get('/cajaList/:page', secure(EPermissions.ventas), cajaList)
   .get('/cajaListPDF', secure(EPermissions.ventas), cajaListPDF)
+  .get('/cajaListExcel', secure(EPermissions.ventas), cajaListExcel)
   .get(
     '/factDataPDF/:id',
     secure(EPermissions.ventas),

@@ -112,6 +112,8 @@ export interface IFactura {
   localidad: string;
   provincia: string;
   cat_pago: string;
+  pagos?: IFormasPago[];
+  items?: IDetFactura[];
 }
 
 export interface IDetFactura {
