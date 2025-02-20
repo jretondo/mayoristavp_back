@@ -316,18 +316,7 @@ export const invoicePDFMiddle = () => {
           req.body.formapagoStr = formapagoStr;
 
           const browser = await puppeteer.launch({
-            args: [
-              '--no-sandbox',
-              '--disable-setuid-sandbox',
-              '--disable-dev-shm-usage',
-              '--disable-gpu',
-              '--disable-software-rasterizer',
-              '--disable-dev-shm-usage',
-              '--disable-accelerated-2d-canvas',
-              '--disable-features=IsolateOrigins,site-per-process',
-            ],
-            timeout: 60000, // 60 segundos de timeout en el lanzamiento
-            protocolTimeout: 60000, // Aumenta el timeout del protocolo
+            args: ['--no-sandbox', '--disable-setuid-sandbox'],
             executablePath:
               process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
           });

@@ -11,6 +11,9 @@ services:
       - ./views:/app/views
       - ./src:/app/src
       - ./tsconfig.json:/app/tsconfig.json
+      - ./:/app
+      - /app/node_modules
+      - ./public:/app/public
     ports:
       - '3016:3016'
     env_file:
