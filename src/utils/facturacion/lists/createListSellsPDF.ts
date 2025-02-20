@@ -52,7 +52,7 @@ export const createListSellsPDF = async (
 
     const totaleslista: Array<{
       tipoStr: string;
-      totalStr: string;
+      totalStr: number;
     }> = [];
 
     const listaVtas: Array<{
@@ -60,7 +60,7 @@ export const createListSellsPDF = async (
       cliente: string;
       factura: string;
       formaPago: string;
-      totalStr: string;
+      totalStr: number;
     }> = [];
 
     const metodos = [
@@ -114,7 +114,7 @@ export const createListSellsPDF = async (
       totalTipo > 0 &&
         totaleslista.push({
           tipoStr: metodo.typeStr,
-          totalStr: String(formatMoney(totalTipo)),
+          totalStr: totalTipo,
         });
     });
 
@@ -165,14 +165,14 @@ export const createListSellsPDF = async (
           formaPagoStr = 'Efectivo';
           break;
       }
-      const importe = formatMoney(current.total_fact);
+      const importe = current.total_fact;
 
       listaVtas.push({
         fecha: fecha,
         cliente: cliente,
         factura: factura,
         formaPago: formaPagoStr,
-        totalStr: importe || '0.00',
+        totalStr: importe || 0,
       });
     }
     const datos = {
@@ -187,7 +187,7 @@ export const createListSellsPDF = async (
           : 'Todos los usuarios',
       desdeStr: desdeStr,
       hastaStr: hastaStr,
-      totaleslista: totaleslista.filter((total) => total.totalStr !== '0.00'),
+      totaleslista: totaleslista.filter((total) => total.totalStr !== 0),
       listaVtas: listaVtas,
     };
 

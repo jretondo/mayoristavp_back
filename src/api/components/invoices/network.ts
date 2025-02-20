@@ -308,7 +308,6 @@ const resetTokenAfip = (req: Request, res: Response, next: NextFunction) => {
 const getCategoriasPago = (req: Request, res: Response, next: NextFunction) => {
   Controller.getCategoriasPago()
     .then((data) => {
-      console.log('data :>> ', data);
       success({ req, res, message: data });
     })
     .catch(next);

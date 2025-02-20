@@ -530,8 +530,7 @@ export = (injectedStore: typeof StoreType) => {
       undefined,
       undefined,
     );
-    // console.log('data :>> ', data);
-    console.log('filters :>> ', filters);
+
     const prodList = await createProdListPDF(data);
     return prodList;
   };
