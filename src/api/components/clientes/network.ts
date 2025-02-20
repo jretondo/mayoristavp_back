@@ -109,6 +109,8 @@ const listCtaCte = (req: Request, res: Response, next: NextFunction) => {
   Controller.listCtaCte(
     Boolean(req.query.debit),
     Boolean(req.query.credit),
+    String(req.query.desde),
+    String(req.query.hasta),
     req.query.cliente ? String(req.query.cliente) : undefined,
     Number(req.params.page),
   )
@@ -119,6 +121,55 @@ const listCtaCte = (req: Request, res: Response, next: NextFunction) => {
         status: 200,
         message: lista,
       });
+    })
+    .catch(next);
+};
+
+const listCtaCteExcel = (req: Request, res: Response, next: NextFunction) => {
+  Controller.listCtaCte(
+    Boolean(req.query.debit),
+    Boolean(req.query.credit),
+    String(req.query.desde),
+    String(req.query.hasta),
+    req.query.cliente ? String(req.query.cliente) : undefined,
+    undefined,
+    undefined,
+    undefined,
+    true,
+  )
+    .then((dataFact: any) => {
+      file(
+        req,
+        res,
+        dataFact.filePath,
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        dataFact.fileName,
+        dataFact,
+      );
+    })
+    .catch(next);
+};
+
+const listCtaCtePDF = (req: Request, res: Response, next: NextFunction) => {
+  Controller.listCtaCte(
+    Boolean(req.query.debit),
+    Boolean(req.query.credit),
+    String(req.query.desde),
+    String(req.query.hasta),
+    req.query.cliente ? String(req.query.cliente) : undefined,
+    undefined,
+    undefined,
+    true,
+  )
+    .then((dataFact: any) => {
+      file(
+        req,
+        res,
+        dataFact.filePath,
+        'application/pdf',
+        dataFact.fileName,
+        dataFact,
+      );
     })
     .catch(next);
 };
@@ -174,6 +225,8 @@ const deletePayment = (req: Request, res: Response, next: NextFunction) => {
 
 router
   .get('/dataFiscal', secure(EPermissions.clientes), dataFiscalPadron)
+  .get('/ctaCte/all/excel', secure(EPermissions.clientes), listCtaCteExcel)
+  .get('/ctaCte/all/pdf', secure(EPermissions.clientes), listCtaCtePDF)
   .get('/ctaCte/all/:page', secure(EPermissions.clientes), listCtaCte)
   .get('/ctaCte/:page', secure(EPermissions.clientes), listCtaCteClient)
   .get('/details/:id', secure(EPermissions.clientes), get)

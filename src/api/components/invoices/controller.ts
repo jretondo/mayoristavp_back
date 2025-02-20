@@ -458,12 +458,11 @@ export = (injectedStore: typeof StoreType) => {
           fileName: uniqueSuffix + '-facturas.xlsx',
         };
       }
-      {
-        return {
-          data,
-          totales,
-        };
-      }
+
+      return {
+        data,
+        totales,
+      };
     }
   };
 

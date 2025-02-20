@@ -143,6 +143,13 @@ export interface IMovCtaCte {
   forma_pago: number;
   importe: number;
   detalle: string;
+  razsoc?: string;
+  ndoc?: string;
+  letra?: string;
+  pv?: number;
+  cbte?: number;
+  t_fact?: number;
+  cuit?: boolean;
 }
 
 export interface IFormasPago {

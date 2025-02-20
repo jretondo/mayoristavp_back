@@ -18,6 +18,10 @@ import StoreType from '../../../store/mysql';
 import getPages from '../../../utils/getPages';
 import { NextFunction } from 'express';
 import fs from 'fs';
+import { utils, writeFile } from 'xlsx';
+import path from 'path';
+import moment from 'moment';
+import { createListCtaCtePDF } from '../../../utils/facturacion/lists/createListCtaCtePDF';
 
 export = (injectedStore: typeof StoreType) => {
   let store = injectedStore;
@@ -249,9 +253,13 @@ export = (injectedStore: typeof StoreType) => {
   const listCtaCte = async (
     debit: boolean,
     credit: boolean,
+    desde: string,
+    hasta: string,
     cliente?: string,
     page?: number,
     cantPerPage?: number,
+    pdf?: boolean,
+    excel?: boolean,
   ) => {
     let filter: IWhereParams | undefined = undefined;
     let filters: Array<IWhereParams> = [];
@@ -289,6 +297,28 @@ export = (injectedStore: typeof StoreType) => {
       };
       filters.push(filter);
     }
+
+    filters.push({
+      mode: EModeWhere.higherEqual,
+      concat: EConcatWhere.and,
+      items: [
+        {
+          column: `${Tables.CTA_CTE}.${Columns.ctaCte.fecha}`,
+          object: String(desde),
+        },
+      ],
+    });
+
+    filters.push({
+      mode: EModeWhere.lessEqual,
+      concat: EConcatWhere.and,
+      items: [
+        {
+          column: `${Tables.CTA_CTE}.${Columns.ctaCte.fecha}`,
+          object: String(hasta),
+        },
+      ],
+    });
 
     let pages: Ipages;
 
@@ -348,18 +378,92 @@ export = (injectedStore: typeof StoreType) => {
         suma,
       };
     } else {
+      const join2: IJoin = {
+        table: Tables.FACTURAS,
+        colOrigin: Columns.ctaCte.id_factura,
+        colJoin: Columns.facturas.id,
+        type: ETypesJoin.left,
+      };
       const data = await store.list(
         Tables.CTA_CTE,
-        [ESelectFunct.all],
+        [
+          `${Tables.CTA_CTE}.${Columns.ctaCte.id}`,
+          `${Tables.CTA_CTE}.${Columns.ctaCte.fecha}`,
+          Columns.ctaCte.id_cliente,
+          Columns.ctaCte.id_factura,
+          Columns.ctaCte.id_recibo,
+          Columns.ctaCte.importe,
+          Columns.ctaCte.detalle,
+          Columns.clientes.razsoc,
+          Columns.clientes.ndoc,
+          Columns.clientes.cuit,
+          Columns.facturas.letra,
+          Columns.facturas.pv,
+          Columns.facturas.cbte,
+          Columns.facturas.t_fact,
+        ],
         filters,
         undefined,
         undefined,
+        [join, join2],
       );
       const suma = await store.list(
         Tables.CTA_CTE,
         [`SUM(${Columns.ctaCte.importe}) as SUMA`],
         filters,
+        undefined,
+        undefined,
+        [join],
       );
+
+      if (excel) {
+        const dataProcessed = data.map((item: any) => {
+          return {
+            Id: item.id,
+            Fecha: item.fecha,
+            Cliente: item.razsoc,
+            Documento: item.ndoc,
+            Detalle: item.detalle,
+            Importe: item.importe,
+            Letra: item.letra,
+            'Punto de Venta': item.pv,
+            Comprobante: item.cbte,
+          };
+        });
+        const workBook = utils.book_new();
+        const workSheet1 = utils.json_to_sheet(dataProcessed);
+        utils.book_append_sheet(workBook, workSheet1, 'CtaCte');
+        const uniqueSuffix = moment().format('YYYYMMDDHHmmss');
+        const excelAddress = path.join(
+          'public',
+          'reports',
+          uniqueSuffix + '-ctacte.xlsx',
+        );
+        await writeFile(workBook, excelAddress);
+        setTimeout(() => {
+          fs.unlinkSync(excelAddress);
+        }, 2500);
+        return {
+          filePath: excelAddress,
+          contentType:
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          fileName: uniqueSuffix + '-ctacte.xlsx',
+        };
+      } else if (pdf) {
+        const cajaList: any = await createListCtaCtePDF(
+          desde,
+          hasta,
+          suma[0].SUMA,
+          data,
+          cliente,
+        );
+        try {
+          setTimeout(() => {
+            fs.unlinkSync(cajaList.filePath);
+          }, 2500);
+        } catch (error) {}
+        return cajaList;
+      }
       return {
         data,
         suma,
