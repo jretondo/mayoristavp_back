@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   mayoristavp-app-prod:
-    image: node-point-sell-prod:latest
+    image: node-point-sell-prod:1.0
     working_dir: /app
     volumes:
       - /etc/letsencrypt/live/nekoadmin.com.ar-0001/fullchain.pem:/etc/letsencrypt/live/nekoadmin.com.ar-0001/fullchain.pem:ro
