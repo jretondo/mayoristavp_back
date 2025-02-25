@@ -596,7 +596,7 @@ export = (injectedStore: typeof StoreType) => {
     const groupBy: Array<string> = [Columns.prodPrincipal.subcategory];
     return await store.list(
       Tables.PRODUCTS_PRINCIPAL,
-      [Columns.prodPrincipal.family],
+      [`DISTINCT ${Columns.prodPrincipal.family}`],
       undefined,
       groupBy,
       undefined,
