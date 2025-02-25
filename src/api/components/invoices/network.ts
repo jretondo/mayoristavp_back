@@ -69,8 +69,6 @@ const newInvoice = (req: Request, res: Response, next: NextFunction) => {
     req.body.productsList,
     req.body.fileName,
     req.body.filePath,
-    req.body.timer,
-    req.body.user,
     req.body.variosPagos,
     next,
     req.body.parcial,

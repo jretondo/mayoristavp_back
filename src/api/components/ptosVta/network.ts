@@ -37,6 +37,22 @@ const list2 = (req: Request, res: Response, next: NextFunction) => {
     .catch(next);
 };
 
+const getSaldosEfvo = (req: Request, res: Response, next: NextFunction) => {
+  Controller.getSaldosEfvo()
+    .then((data) => {
+      success({ req, res, message: data });
+    })
+    .catch(next);
+};
+
+const updateSaldoEfvo = (req: Request, res: Response, next: NextFunction) => {
+  Controller.updateSaldoEfvo(req.body.pvId, req.body.saldo)
+    .then((data) => {
+      success({ req, res, message: data });
+    })
+    .catch(next);
+};
+
 const upsert = (req: Request, res: Response, next: NextFunction) => {
   Controller.upsert(req.body)
     .then((response) => {
@@ -78,6 +94,8 @@ const getUserPv = (req: Request, res: Response, next: NextFunction) => {
 
 router.get('/userPv', secure(), getUserPv);
 router.get('/list', secure(), list2);
+router.get('/saldosEfvo', secure(), getSaldosEfvo);
+router.put('/saldosEfvo', secure(), updateSaldoEfvo);
 router.get('/details/:id', secure(EPermissions.ptosVta), get);
 router.get('/:page', secure(EPermissions.ptosVta), list);
 router.get('/', secure(EPermissions.ptosVta), list);

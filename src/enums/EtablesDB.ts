@@ -36,6 +36,7 @@ enum PtosVta {
   ini_act = 'ini_act',
   cat_mono = 'cat_mono',
   stock_ind = 'stock_ind',
+  saldo_efvo = 'saldo_efvo',
 }
 
 enum ProductosPrincipal {

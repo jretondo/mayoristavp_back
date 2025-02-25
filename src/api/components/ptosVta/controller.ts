@@ -74,6 +74,20 @@ export = (injectedStore: typeof StoreType) => {
     }
   };
 
+  const getSaldosEfvo = async () => {
+    return await store.list(Tables.PUNTOS_VENTA, [
+      Columns.ptosVta.saldo_efvo,
+      Columns.ptosVta.pv,
+      Columns.ptosVta.direccion,
+      Columns.ptosVta.id,
+      Columns.ptosVta.raz_soc,
+    ]);
+  };
+
+  const updateSaldoEfvo = async (pvId: number, saldo: number) => {
+    return await store.update(Tables.PUNTOS_VENTA, { saldo_efvo: saldo }, pvId);
+  };
+
   const upsert = async (body: INewPV) => {
     const ptoVta: INewPV = {
       cuit: body.cuit,
@@ -86,6 +100,7 @@ export = (injectedStore: typeof StoreType) => {
       cat_mono: body.cat_mono,
       stock_ind: Boolean(body.stock_ind),
       email: body.email,
+      saldo_efvo: 0,
     };
 
     if (body.filesName) {
@@ -150,5 +165,7 @@ export = (injectedStore: typeof StoreType) => {
     remove,
     get,
     getUserPv,
+    getSaldosEfvo,
+    updateSaldoEfvo,
   };
 };

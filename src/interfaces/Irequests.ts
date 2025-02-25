@@ -34,6 +34,7 @@ export interface INewPV {
   cert_file?: string;
   fact_m?: boolean;
   email: string;
+  saldo_efvo: number;
 }
 
 export interface INewProduct {

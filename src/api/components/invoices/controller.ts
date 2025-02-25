@@ -551,6 +551,7 @@ export = (injectedStore: typeof StoreType) => {
         factId,
         newFact.nota_cred,
       );
+
       return {
         status: 200,
         msg: {
@@ -676,8 +677,6 @@ export = (injectedStore: typeof StoreType) => {
     productsList: Array<IDetFactura>,
     fileName: string,
     filePath: string,
-    timer: number,
-    userData: IUser,
     variosPagos: Array<{
       tipo: MetodosPago;
       tipo_txt: string;
@@ -722,6 +721,18 @@ export = (injectedStore: typeof StoreType) => {
 
     if (Number(newFact.forma_pago) === 5) {
       variosPagos.map(async (item) => {
+        if (Number(item.tipo) === 0) {
+          const saldoAnterior = await store.get(
+            Tables.PUNTOS_VENTA,
+            pvData.id || 0,
+          );
+          const saldoActual = saldoAnterior[0].saldo_efvo + item.importe;
+          await store.update(
+            Tables.PUNTOS_VENTA,
+            { saldo_efvo: saldoActual },
+            pvData.id || 0,
+          );
+        }
         const dataForma: IFormasPago = {
           id_fact: resultInsert.msg.factId,
           tipo: item.tipo,
@@ -756,8 +767,7 @@ export = (injectedStore: typeof StoreType) => {
     setTimeout(() => {
       fs.unlinkSync(filePath);
     }, 6000);
-    const difTime = Number(new Date()) - timer;
-    console.log('difTime :>> ', difTime);
+
     const dataFact = {
       fileName,
       filePath,

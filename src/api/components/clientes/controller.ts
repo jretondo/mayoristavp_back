@@ -504,6 +504,18 @@ export = (injectedStore: typeof StoreType) => {
           nro_cheque: pago.nro_cheque,
           notas: pago.notas,
         });
+        if (Number(pago.tipo) === 0) {
+          const saldoAnterior = await store.get(
+            Tables.PUNTOS_VENTA,
+            newFact.pv_id,
+          );
+          const saldoActual = saldoAnterior[0].saldo_efvo + pago.importe;
+          await store.update(
+            Tables.PUNTOS_VENTA,
+            { saldo_efvo: saldoActual },
+            newFact.pv_id,
+          );
+        }
       });
 
       setTimeout(() => {
