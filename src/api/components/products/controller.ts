@@ -206,6 +206,13 @@ export = (injectedStore: typeof StoreType) => {
   };
 
   const publicList = async () => {
+    const filters: Array<IWhereParams> = [];
+    const filter: IWhereParams = {
+      mode: EModeWhere.strict,
+      concat: EConcatWhere.none,
+      items: [{ column: Columns.prodPrincipal.enabled, object: '1' }],
+    };
+    filters.push(filter);
     const order: Iorder = {
       columns: [
         Columns.prodPrincipal.family,
@@ -231,7 +238,7 @@ export = (injectedStore: typeof StoreType) => {
         `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.id} as id_prod`,
         `SUM(${Columns.stock.cant}) as stock`,
       ],
-      undefined,
+      filters,
       groupBy,
       undefined,
       [joinQuery],
@@ -407,6 +414,15 @@ export = (injectedStore: typeof StoreType) => {
         }
         return result;
       }
+    }
+  };
+
+  const toggleProduct = async (id: number) => {
+    const product = await store.get(Tables.PRODUCTS_PRINCIPAL, id);
+    if (product[0].enabled === 1) {
+      await store.update(Tables.PRODUCTS_PRINCIPAL, { enabled: 0 }, id);
+    } else {
+      await store.update(Tables.PRODUCTS_PRINCIPAL, { enabled: 1 }, id);
     }
   };
 
@@ -593,7 +609,28 @@ export = (injectedStore: typeof StoreType) => {
   };
 
   const getSubCategory = async () => {
+    const order: Iorder = {
+      columns: [Columns.prodPrincipal.subcategory],
+      asc: true,
+    };
     const groupBy: Array<string> = [Columns.prodPrincipal.subcategory];
+    return await store.list(
+      Tables.PRODUCTS_PRINCIPAL,
+      [`DISTINCT ${Columns.prodPrincipal.subcategory}`],
+      undefined,
+      groupBy,
+      undefined,
+      undefined,
+      order,
+    );
+  };
+
+  const getFamily = async () => {
+    const order: Iorder = {
+      columns: [Columns.prodPrincipal.family],
+      asc: true,
+    };
+    const groupBy: Array<string> = [Columns.prodPrincipal.family];
     return await store.list(
       Tables.PRODUCTS_PRINCIPAL,
       [`DISTINCT ${Columns.prodPrincipal.family}`],
@@ -601,18 +638,7 @@ export = (injectedStore: typeof StoreType) => {
       groupBy,
       undefined,
       undefined,
-    );
-  };
-
-  const getFamily = async () => {
-    const groupBy: Array<string> = [Columns.prodPrincipal.family];
-    return await store.list(
-      Tables.PRODUCTS_PRINCIPAL,
-      [Columns.prodPrincipal.family],
-      undefined,
-      groupBy,
-      undefined,
-      undefined,
+      order,
     );
   };
 
@@ -922,5 +948,6 @@ export = (injectedStore: typeof StoreType) => {
     updateList,
     getFamily,
     publicList,
+    toggleProduct,
   };
 };

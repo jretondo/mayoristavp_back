@@ -183,6 +183,15 @@ const getPublicList = (req: Request, res: Response, next: NextFunction) => {
     })
     .catch(next);
 };
+
+const toggleProduct = (req: Request, res: Response, next: NextFunction) => {
+  Controller.toggleProduct(Number(req.params.id))
+    .then((data) => {
+      success({ req, res, message: data });
+    })
+    .catch(next);
+};
+
 router.get('/', secure(EPermissions.productos), list);
 router.get('/public', getPublicList);
 router.get('/details/:id', secure(EPermissions.productos), get);
@@ -209,5 +218,6 @@ router.put(
 );
 router.delete('/:id', secure(EPermissions.productos), remove);
 router.put('/codBarra/:id', secure(EPermissions.productos), updateCodBarras);
+router.put('/toggle/:id', secure(EPermissions.productos), toggleProduct);
 
 export = router;
