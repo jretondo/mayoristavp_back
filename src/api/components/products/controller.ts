@@ -261,7 +261,8 @@ export = (injectedStore: typeof StoreType) => {
 
         const cat = item.category;
         const subCat = item.subcategory;
-        const category = [subCat];
+        const family = item.family;
+        const category = [family];
         const saleCount = 100;
         const nuevo = false;
         const discount = 0;
@@ -595,7 +596,7 @@ export = (injectedStore: typeof StoreType) => {
     const groupBy: Array<string> = [Columns.prodPrincipal.subcategory];
     return await store.list(
       Tables.PRODUCTS_PRINCIPAL,
-      [Columns.prodPrincipal.subcategory],
+      [Columns.prodPrincipal.family],
       undefined,
       groupBy,
       undefined,
