@@ -193,11 +193,19 @@ const factuMiddel = () => {
 
       if (body.fiscal) {
         ivaList = await listaIva(productsList.listaProd, descuentoPer);
+        console.log(
+          'Number(clienteData[0].cuit :>> ',
+          Number(clienteData[0].cuit),
+        );
         dataFiscal = {
           CantReg: 1,
           PtoVta: pvData[0].pv,
           CbteTipo: body.t_fact,
-          DocTipo: body.cliente_id ? (clienteData[0].cuit ? 80 : 99) : 99,
+          DocTipo: body.cliente_id
+            ? Number(clienteData[0].cuit)
+              ? 80
+              : 99
+            : 99,
           DocNro: body.cliente_id ? Number(clienteData[0].ndoc) : 0,
           CbteFch: moment(body.fecha, 'YYYY-MM-DD').format('YYYYMMDD'),
           ImpTotal: roundNumber(productsList.totalFact),
