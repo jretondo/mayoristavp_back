@@ -202,7 +202,7 @@ const factuMiddel = () => {
           PtoVta: pvData[0].pv,
           CbteTipo: body.t_fact,
           DocTipo: body.cliente_id
-            ? Number(clienteData[0].cuit)
+            ? Number(clienteData[0].cuit) === 0
               ? 80
               : 99
             : 99,
