@@ -1,4 +1,4 @@
-import mysql from 'mysql';
+import mysql, { ConnectionConfig } from 'mysql';
 import { Tables } from '../../enums/EtablesDB';
 import { config } from '../../config';
 import {
@@ -16,7 +16,7 @@ import {
   IWhereParams,
 } from 'interfaces/Ifunctions';
 
-const dbConf = {
+const dbConf: ConnectionConfig = {
   host: config.mysql.host,
   user: config.mysql.user,
   password: config.mysql.password,
@@ -33,7 +33,9 @@ const handleCon = () => {
   }
   isAttemptingReconnect = true;
 
-  connection = mysql.createConnection(dbConf);
+  connection = mysql.createConnection({
+    ...dbConf,
+  });
 
   connection.connect((err: any) => {
     if (err) {

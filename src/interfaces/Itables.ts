@@ -12,6 +12,7 @@ export interface IUser {
   email: string;
   usuario: string;
   pv: number;
+  telefono: string;
 }
 export interface IUserPermission {
   id?: number;

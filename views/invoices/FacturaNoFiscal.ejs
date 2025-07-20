@@ -1,7 +1,7 @@
 <% function formatoPrecio(precio) { return precio.toLocaleString('es-AR', { style: 'currency' , currency: 'ARS' }); } %>
 <% function upperCase(str){return str.toUpperCase()} %>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 
 <head>
   <meta charset="utf-8">
@@ -12,7 +12,6 @@
 <body>
   <% paginasItems.forEach((pagina, index) => { %>
     <div class="pagina">
-  <%- myCss %>
   <div class="contenido">
     <header class="clearfix">
       <div id="logo">
@@ -162,7 +161,7 @@
       </table>
     </main>   
     <%       
-      const extraMargin = 900 - pagina.length * 20;
+      const extraMargin = 700 - pagina.length * 20;
     %>
     <% if (index === totalPaginas - 1) { %>
       <footer class="footer-final" style="margin-top: <%= extraMargin %>px;">

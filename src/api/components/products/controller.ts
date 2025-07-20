@@ -121,7 +121,7 @@ export = (injectedStore: typeof StoreType) => {
         pages = {
           currentPage: page,
           cantPerPage: cantPerPage || 10,
-          order: Columns.prodImg.id_prod,
+          order: `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.name}`,
           asc: true,
         };
         let data = await store.list(

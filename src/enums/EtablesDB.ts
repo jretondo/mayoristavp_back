@@ -5,6 +5,7 @@ enum AdminCol {
   email = 'email',
   usuario = 'usuario',
   pv = 'pv',
+  telefono = 'telefono',
 }
 
 enum AuthAdmCol {

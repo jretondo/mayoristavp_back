@@ -85,7 +85,7 @@ export const paymentPDFMiddle = () => {
       ) {
         condIvaStrCliente = 'Consumidor Final';
       }
-
+      
       const ptoVta = {
         razSocOrigen: pvData.raz_soc,
         direccionOrigen: pvData.direccion,
@@ -193,8 +193,8 @@ export const paymentPDFMiddle = () => {
         ...footer,
         categoriasPago,
       };
-
-      const ejsPath = 'Recibo.ejs';
+      
+      const ejsPath = 'recibo.ejs';
 
       ejs.renderFile(
         path.join('views', 'invoices', ejsPath),
@@ -204,14 +204,6 @@ export const paymentPDFMiddle = () => {
             console.log('err', err);
             throw new Error('Algo salio mal');
           }
-          let options = {
-            height: '16.5in', // allowed units: mm, cm, in, px
-            width: '12in', //
-            border: {
-              right: '0.5cm',
-              left: '0.5cm',
-            },
-          };
 
           const fileName = newFact.letra + ' ' + pvStr + '-' + nroStr + '.pdf';
           const filePath = path.join('public', 'invoices', fileName);
@@ -226,9 +218,20 @@ export const paymentPDFMiddle = () => {
           });
           const page = await browser.newPage();
           await page.setContent(data, { waitUntil: 'networkidle0' });
+          await page.pdf({
+            path: filePath,
+            format: 'A4',
+            landscape: false,
+            scale: 1,
+            displayHeaderFooter: false,
 
-          await page.pdf({ path: filePath, ...options });
-
+            margin: {
+              top: '0.5cm',
+              bottom: '0.5cm',
+              left: '0.5cm',
+              right: '0.5cm',
+            },
+          });
           await browser.close();
           next();
         },

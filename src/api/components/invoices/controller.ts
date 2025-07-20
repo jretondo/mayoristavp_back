@@ -203,6 +203,15 @@ export = (injectedStore: typeof StoreType) => {
 
     filters.push(filter1, filter2);
 
+    const pagosFilter: IWhereParams[] = [
+      ...filters,
+      {
+        mode: EModeWhere.strict,
+        concat: EConcatWhere.and,
+        items: [{ column: Columns.facturas.letra, object: String('OP') }],
+      },
+    ];
+
     let pages: Ipages;
 
     const joinQuery: IJoin = {
@@ -237,7 +246,16 @@ export = (injectedStore: typeof StoreType) => {
         undefined,
         [joinQuery],
       );
-
+      const totalesPagos = await store.list(
+        Tables.FACTURAS,
+        [
+          `SUM(${Columns.facturas.total_fact}) AS SUMA`,
+          Columns.facturas.cat_pago,
+        ],
+        pagosFilter,
+        [Columns.facturas.cat_pago],
+        undefined,
+      );
       const data = await store.list(
         Tables.FACTURAS,
         [ESelectFunct.all],
@@ -273,6 +291,7 @@ export = (injectedStore: typeof StoreType) => {
         pagesObj,
         totales,
         totales2,
+        totalesPagos,
       };
     } else {
       const totales = await store.list(

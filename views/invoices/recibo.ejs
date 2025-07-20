@@ -1,0 +1,433 @@
+<% function formatoPrecio(precio) { return precio.toLocaleString('es-AR', {
+style: 'currency' , currency: 'ARS' }); } %> 
+<% function upperCase(str){return str.toUpperCase()} %>
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>RECIBO DE PAGO</title>
+    <link
+      href="https://fonts.googleapis.com/css?family=Source+Sans+Pro"
+      rel="stylesheet"
+      type="text/css"
+    />
+    
+    <style>
+        .clearfix:after {
+        content: '';
+        display: table;
+        clear: both;
+        }
+
+        /* General Styles */
+        body {
+        position: relative;
+        width: 20cm;
+        height: 28cm;
+        margin: 0 auto;
+        color: #555555;
+        background: #ffffff;
+        font-family: 'Source Sans Pro', Arial, sans-serif;
+        font-size: 12px;
+        font-weight: normal;
+        }
+
+        a {
+        color: #cfcfcf;
+        text-decoration: none;
+        }
+
+        /* Header */
+        header {
+        padding: 10px 0;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #aaaaaa;
+        }
+
+        #logo {
+        float: left;
+        text-align: center;
+        }
+
+        #logo img {
+        height: 100px;
+        }
+
+        #company {
+        float: right;
+        text-align: right;
+        }
+
+        /* Client and Invoice Details */
+        #details {
+        margin-bottom: 25px;
+        }
+
+        #client {
+        float: left;
+        padding-left: 8px;
+        border-left: 3px solid #cfcfcf;
+        }
+
+        #shipping {
+        float: left;
+        padding-left: 8px;
+        border-left: 3px solid #cfcfcf;
+        margin-left: 80px;
+        }
+
+        #client .to {
+        color: #777777;
+        }
+
+        h2.name {
+        font-size: 1em;
+        font-weight: normal;
+        margin: 0;
+        }
+
+        #invoice {
+        float: right;
+        text-align: right;
+        padding-right: 8px;
+        border-right: 3px solid #cfcfcf;
+        }
+
+        #invoice h1 {
+        color: #cfcfcf;
+        font-size: 2.4em;
+        line-height: 1em;
+        font-weight: normal;
+        margin: 0 0 10px 0;
+        }
+
+        #invoice .date {
+        font-size: 1.1em;
+        color: #777777;
+        }
+
+        /* Tables */
+        table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+        border: none;
+        }
+
+        table th,
+        table td {
+        padding-inline: 5px;
+        text-align: center;
+        vertical-align: middle;
+        background: #c0bcbc;
+        border-bottom: 1px solid #fff;
+        }
+
+        table th {
+        white-space: nowrap;
+        font-weight: normal;
+        }
+
+        table td {
+        text-align: right;
+        }
+
+        table td h3 {
+        color: #c0bcbc;
+        font-size: 0.8em;
+        font-weight: normal;
+        margin: 0 0 0.2em 0;
+        font-weight: normal;
+        }
+
+        table .no {
+        font-size: 0.8em;
+        }
+
+        table .desc {
+        text-align: left;
+        }
+
+        table .unit {
+        background: #cfcfcf;
+        }
+
+        table .qty {
+        font-size: 0.8em;
+        }
+
+        table .total {
+        background: #cfcfcf;
+        }
+
+        .unit,
+        .qty,
+        .total {
+        font-size: 12px;
+        }
+
+        .unit {
+        text-align: center;
+        font-size: 12px;
+        }
+
+        .total,
+        .qty {
+        text-align: right;
+        font-size: 12px;
+        }
+
+        table tfoot td {
+        padding: 10px 20px;
+        background: #cfcfcf;
+        font-size: 1.2em;
+        white-space: nowrap;
+        }      
+
+        /* Additional Sections */
+        #thanks {
+        font-size: 2em;
+        margin-bottom: 50px;
+        }
+
+        #notices {
+        padding-left: 6px;
+        border-left: 6px solid #cfcfcf;
+        }
+
+        #notices .notice {
+        font-size: 1.2em;
+        }
+
+        /* Footer */
+        .footer-final {
+        color: #777777;
+        width: 100%;
+        position: relative;
+        padding: 0;
+        text-align: left;
+        font-size: 12px;
+        margin-top: 50px;
+        }
+
+        footer {
+        color: #777777;
+        width: 100%;
+        position: absolute;
+        padding: 0;
+        text-align: left;
+        font-size: 12px;
+        bottom: 0;
+        }
+
+      body {
+        font-family: 'Source Sans Pro', Arial, sans-serif;
+        font-size: 12px;
+        width: 19cm;
+        padding: 1cm;
+        background-color: #fff;
+        margin: 0 auto;
+      }
+      h2.name {
+        font-size: 14px;
+        margin: 0;
+        font-weight: bold;
+      }
+      h3 {
+        font-size: 13px;
+        margin: 15px 0 5px;
+        border-bottom: 1px solid #aaa;
+        padding-bottom: 2px;
+        color: #222;
+      }
+      .clearfix::after {
+        content: '';
+        display: table;
+        clear: both;
+      }
+      #logo {
+        float: left;
+        width: 45%;
+      }
+      #logo img {
+        max-height: 100px;
+        margin-bottom: 5px;
+      }
+      #company {
+        float: right;
+        text-align: left;
+        width: 35%;
+      }
+      .pagos-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        font-size: 12px;
+      }
+      .pagos-table th,
+      .pagos-table td {
+        border: 1px solid black;
+        padding: 5px 8px;
+        text-align: center;
+      }
+      .pagos-table th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+      }
+      .footer-final {
+        margin-top: 20px;
+        font-size: 12px;
+        color: #555;
+      }
+      .footer-final table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 10px;
+      }
+      .footer-final td {
+        padding: 5px;
+        font-weight: bold;
+        font-size: 12px;
+      }
+      .footer-final .line {
+        border-top: 2px solid #aaa;
+        margin: 10px 0;
+      }
+      .footer-final .info {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+      }
+      .footer-final .info h3 {
+        margin: 0;
+        font-size: 12px;
+        font-weight: normal;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="clearfix">
+      <div id="logo" style="position: relative; z-index: 2;">
+        <img src="<%- logo %>" />
+        <h2 class="name"><%- upperCase(razSocOrigen) %></h2>
+        <div><%- upperCase(direccionOrigen) %></div>
+        <div style="font-weight: bold"><%- upperCase(condIvaOrigen) %></div>
+        <div>
+          <a href="mailto:<%- emailOrigen %>"><%- emailOrigen %></a>
+        </div>
+      </div>
+     <div style="position: absolute; text-align: center; width: 100%; z-index: 0;">
+        <h2 class="name" style="font-weight: bold">ORIGINAL</h2>
+        <div
+          style="
+            width: 80px;
+            height: 80px;
+            background: #80808061;
+            margin: auto;
+            border: 4px solid black;
+            margin-top: 20px;
+          "
+        >
+          <h1 style="margin-top: 5px; margin-bottom: 5px; font-size: 35px">
+            <%- letra %>
+          </h1>
+          <span>No Fiscal</span>
+        </div>
+      </div>
+      <div id="company" style="margin-top: 21px; text-align: left; position: relative; z-index: 2;">
+        <h2 class="name" style="margin-bottom: 10px">
+          RECIBO Nº: <span style="font-weight: bold"><%- factNro %></span>
+        </h2>
+        <h2 class="name" style="margin-bottom: 10px">
+          FECHA: <span style="font-weight: bold"><%- fechaFact %></span>
+        </h2>
+        <div style="margin-bottom: 7px">
+          CUIT: <span style="font-weight: bold"><%- cuitOrigen %></span>
+        </div>
+        <div style="margin-bottom: 7px">
+          IIBB: <span style="font-weight: bold"><%- iibbOrigen %></span>
+        </div>
+        <div style="margin-bottom: 7px">
+          INICIO DE ACT.: <span style="font-weight: bold"><%- iniAct %></span>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section id="proveedor" style="margin-top: 20px; position: relative; z-index: 2;">
+        <% if (clienteNro !== 99999999) { %>
+        <h3><%= letra === "OP" ? "PROVEEDOR:" : "CLIENTE:" %></h3>
+        <h2 class="name"><%- upperCase(clienteName) %></h2>
+        <h2 class="name"><%- upperCase(condIvaCliente) %></h2>
+        <h2 class="name"><%- tipoDoc %> : <%- clienteNro %></h2>
+        <div class="email">
+          <a href="mailto:<%- upperCase(clienteEmail) %>"
+            ><%- upperCase(clienteEmail) %></a
+          >
+        </div>
+        <% } else { %>
+        <h3>CONSUMIDOR FINAL</h3>
+        <div><a href="mailto:<%- clienteEmail %>"><%- clienteEmail %></a></div>
+        <% } %>
+      </section>
+
+      <section id="pagos" style="margin-top: 30px">
+        <h3>FORMA DE PAGO</h3>
+        <table class="pagos-table">
+          <thead>
+            <tr>
+              <th>TIPO</th>
+              <th>IMPORTE</th>
+              <th>BANCO</th>
+              <th>Nº CHEQUE</th>
+              <th>VENCIMIENTO</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (parseInt(formaPago.code) === 5) { %> 
+            <% variosPagos.forEach(function(item) { %>
+            <tr>
+              <td><%- upperCase(item.tipo_txt || '-') %></td>
+              <td><%- formatoPrecio(item.importe) %></td>
+              <td><%- item.banco ? upperCase(item.banco) : "-" %></td>
+              <td><%- item.nro_cheque || "-" %></td>
+              <td>
+                <%- item.fecha_vencimiento && item.fecha_vencimiento !==
+                'Invalid date' ? item.fecha_vencimiento : "-" %>
+              </td>
+            </tr>
+            <% }); %> <% } else { %>
+            <tr>
+              <td colspan="5"><%- upperCase(formaPago.string) %></td>
+            </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="descripcion" style="margin-top: 30px; position: relative; z-index: 2;">
+        <h3>DESCRIPCIÓN</h3>
+        <p><%- upperCase(detalle) %></p>
+        <p><%- upperCase(categoriasPago) %></p>
+      </section>
+    </main>
+
+    <footer class="footer-final" style="margin-top: 300px; position: relative; z-index: 2;">
+      <table>
+        <tr>
+          <td><strong>SUB-TOTAL:</strong> $<%- subTotalNoFiscal %></td>
+          <td><strong>DESC.:</strong> $<%- totalDesc %></td>
+          <td><strong>TOTAL:</strong> $<%- totalFact %></td>
+        </tr>
+      </table>
+      <div class="line"></div>
+      <div class="info">
+        <h3 style="margin-top: 5px; margin-bottom: 5px">VENDEDOR:</h3>
+      <h3 style="margin-top: 5px;margin-bottom: 5px">
+  <%- vendedor ? upperCase(vendedor) : "----" %>
+</h3>
+        <h3>NO VÁLIDO COMO COMPROBANTE FISCAL</h3>
+      </div>
+    </footer>
+  </body>
+</html>

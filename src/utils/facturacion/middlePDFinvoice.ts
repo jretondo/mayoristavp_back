@@ -277,7 +277,6 @@ export const invoicePDFMiddle = () => {
 
       const maxItemsPorPagina = 35;
       const paginasItems = dividirEnPaginas(listaItems, maxItemsPorPagina);
-
       const datos2 = {
         myCss: `<style>${myCss}</style>`,
         listaItems,
@@ -321,17 +320,17 @@ export const invoicePDFMiddle = () => {
               process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
           });
           const page = await browser.newPage();
-
           await page.setContent(data, { waitUntil: 'networkidle0' });
           await page.pdf({
             path: filePath,
             format: 'A4',
             landscape: false,
-            scale: 0.8,
+            scale: 1,
             displayHeaderFooter: false,
+
             margin: {
               top: '0.5cm',
-              bottom: '2cm',
+              bottom: '0.5cm',
             },
           });
           await browser.close();
