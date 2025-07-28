@@ -136,7 +136,7 @@ export = (injectedStore: typeof StoreType) => {
             Tables.PUNTOS_VENTA,
             newFact.pv_id,
           );
-          const saldoActual = saldoAnterior[0].saldo_efvo + pago.importe;
+          const saldoActual = saldoAnterior[0].saldo_efvo - pago.importe;
           await store.update(
             Tables.PUNTOS_VENTA,
             { saldo_efvo: saldoActual },
