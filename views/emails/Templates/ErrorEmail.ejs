@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Error en el servidor</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #fafafa;
+        margin: 0;
+        padding: 20px;
+        color: #333;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 25px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      }
+      h2 {
+        color: #c0392b;
+        margin-bottom: 10px;
+      }
+      .section {
+        margin-top: 15px;
+      }
+      .section-title {
+        font-weight: bold;
+        color: #2c3e50;
+        margin-bottom: 5px;
+      }
+      .error-block {
+        background: #f9e6e6;
+        border-left: 5px solid #c0392b;
+        padding: 10px;
+        border-radius: 4px;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      footer {
+        margin-top: 30px;
+        font-size: 12px;
+        color: #888;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>⚠️ Error detectado en el servidor</h2>
+      <p>Hola <%= clientName %>,</p>
+      <p>
+        Se ha producido un error en el servidor a las
+        <strong><%= timestamp %></strong>.
+      </p>
+
+      <div class="section">
+        <div class="section-title">🧠 Mensaje del error:</div>
+        <div class="error-block"><%= errorMessage %></div>
+      </div>
+
+      <% if (stackTrace) { %>
+      <div class="section">
+        <div class="section-title">📜 Stack trace:</div>
+        <div class="error-block"><%= stackTrace %></div>
+      </div>
+      <% } %> <% if (endpoint) { %>
+      <div class="section">
+        <div class="section-title">🔗 Endpoint afectado:</div>
+        <div class="error-block"><%= endpoint %></div>
+      </div>
+      <% } %> <% if (extraInfo) { %>
+      <div class="section">
+        <div class="section-title">📋 Información adicional:</div>
+        <div class="error-block"><%= extraInfo %></div>
+      </div>
+      <% } %>
+
+      <footer>
+        Este mensaje fue generado automáticamente por el sistema.<br />
+        Por favor, no respondas a este correo.
+      </footer>
+    </div>
+  </body>
+</html>

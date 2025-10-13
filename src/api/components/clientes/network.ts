@@ -26,6 +26,7 @@ const list = (req: Request, res: Response, next: NextFunction) => {
 };
 
 const listPagination = (req: Request, res: Response, next: NextFunction) => {
+  throw new Error('Error de prueba');
   Controller.list(
     Number(req.params.page),
     String(req.query.search),
