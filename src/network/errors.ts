@@ -4,7 +4,7 @@ import { ErrorRequestHandler } from 'express';
 
 export const errorTrhow: ErrorRequestHandler = (err, req, res, next) => {
   console.error('[error]', err);
-  const message = 'Error interno';
+  const message = err.message || 'Unexpected Error';
   const status = 500;
   sendErrorEmail(
     err,

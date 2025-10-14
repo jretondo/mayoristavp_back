@@ -11,13 +11,18 @@ export const sendErrorEmail = async (
 ): Promise<any> => {
   const datos = {
     clientName: 'Mariana',
-    timestamp: new Date().toLocaleString('es-AR'),
+    timestamp: new Date().toLocaleString('es-AR', {
+      timeZone: 'America/Argentina/Buenos_Aires',
+    }),
     errorMessage: error.message,
     stackTrace: error.stack,
     endpoint,
     extraInfo,
   };
   console.log(datos);
+  if (error.message.includes(`reading 'pv'`)) {
+    return;
+  }
   return new Promise((resolve, reject) => {
     ejs.renderFile(
       path.join('views', 'emails', 'Templates', 'ErrorEmail.ejs'),
