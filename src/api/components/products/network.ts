@@ -18,6 +18,7 @@ const list = (req: Request, res: Response, next: NextFunction) => {
     String(req.query.provider),
     String(req.query.brand),
     req.query.stock === 'true' ? true : false,
+    req.query.esOferta === 'true' ? true : false,
   )
     .then((lista: any) => {
       success({
@@ -192,6 +193,14 @@ const toggleProduct = (req: Request, res: Response, next: NextFunction) => {
     .catch(next);
 };
 
+const toggleOferta = (req: Request, res: Response, next: NextFunction) => {
+  Controller.toggleOferta(Number(req.params.id))
+    .then((data) => {
+      success({ req, res, message: data });
+    })
+    .catch(next);
+};
+
 router.get('/', secure(EPermissions.productos), list);
 router.get('/public', getPublicList);
 router.get('/details/:id', secure(EPermissions.productos), get);
@@ -219,5 +228,6 @@ router.put(
 router.delete('/:id', secure(EPermissions.productos), remove);
 router.put('/codBarra/:id', secure(EPermissions.productos), updateCodBarras);
 router.put('/toggle/:id', secure(EPermissions.productos), toggleProduct);
+router.put('/toggleOferta/:id', secure(EPermissions.productos), toggleOferta);
 
 export = router;

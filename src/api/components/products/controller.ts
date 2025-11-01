@@ -35,6 +35,7 @@ export = (injectedStore: typeof StoreType) => {
     provider?: string,
     brand?: string,
     stock?: boolean,
+    esOferta?: boolean,
   ) => {
     let filter: IWhereParams | undefined = undefined;
     let filters: Array<IWhereParams> = [];
@@ -105,6 +106,14 @@ export = (injectedStore: typeof StoreType) => {
         data: await Promise.all(data),
       };
     } else {
+      if (esOferta === true) {
+        const ofertaFilter: IWhereParams = {
+          mode: EModeWhere.strict,
+          concat: EConcatWhere.and,
+          items: [{ column: Columns.prodPrincipal.es_oferta, object: '1' }],
+        };
+        filters.push(ofertaFilter);
+      }
       const groupBy: Array<string> = [
         `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.id}`,
       ];
@@ -144,6 +153,7 @@ export = (injectedStore: typeof StoreType) => {
             `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.round}`,
             `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.id_prov}`,
             `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.family}`,
+            `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.es_oferta}`,
             `${Tables.PRODUCTS_IMG}.${Columns.prodImg.url_img}`,
           ],
           filters,
@@ -329,6 +339,7 @@ export = (injectedStore: typeof StoreType) => {
       vta_fija: Boolean(body.vta_fija),
       family: body.family,
       min_stock: body.min_stock,
+      es_oferta: false,
     };
 
     if (body.id) {
@@ -423,6 +434,15 @@ export = (injectedStore: typeof StoreType) => {
       await store.update(Tables.PRODUCTS_PRINCIPAL, { enabled: 0 }, id);
     } else {
       await store.update(Tables.PRODUCTS_PRINCIPAL, { enabled: 1 }, id);
+    }
+  };
+
+  const toggleOferta = async (id: number) => {
+    const product = await store.get(Tables.PRODUCTS_PRINCIPAL, id);
+    if (product[0].es_oferta === 1) {
+      await store.update(Tables.PRODUCTS_PRINCIPAL, { es_oferta: 0 }, id);
+    } else {
+      await store.update(Tables.PRODUCTS_PRINCIPAL, { es_oferta: 1 }, id);
     }
   };
 
@@ -949,5 +969,6 @@ export = (injectedStore: typeof StoreType) => {
     getFamily,
     publicList,
     toggleProduct,
+    toggleOferta,
   };
 };

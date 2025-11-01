@@ -482,6 +482,20 @@ export = (injectedStore: typeof StoreType) => {
       colOrigin: Columns.stock.id_prod,
       type: ETypesJoin.right,
     };
+
+    const totalValorizado = await store
+      .list(
+        Tables.STOCK,
+        [
+          `COALESCE(SUM(${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.precio_compra} * ${Tables.STOCK}.${Columns.stock.cant}), 0) as totalValorizado`,
+        ],
+        filters,
+        undefined,
+        undefined,
+        [joinQuery],
+      )
+      .then((res) => res[0].totalValorizado);
+
     if (page) {
       pages = {
         currentPage: page,
@@ -505,7 +519,7 @@ export = (injectedStore: typeof StoreType) => {
             ? "'' as subcategory"
             : `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.subcategory} as sub_category`,
           `COALESCE(SUM(${Tables.STOCK}.${Columns.stock.cant}), 0) as total`,
-          `COALESCE(SUM(${Tables.STOCK}.${Columns.stock.costo}), 0) as costoTotal`,
+          `COALESCE((${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.precio_compra} * SUM(${Tables.STOCK}.${Columns.stock.cant})), 0) as costoTotal`,
         ],
         filters,
         groupBy,
@@ -525,6 +539,7 @@ export = (injectedStore: typeof StoreType) => {
       return {
         data,
         pagesObj,
+        totalValorizado,
       };
     } else {
       if (pdf) {
@@ -540,7 +555,7 @@ export = (injectedStore: typeof StoreType) => {
             `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.category} `,
             `${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.subcategory} as sub_category`,
             `COALESCE(SUM(${Tables.STOCK}.${Columns.stock.cant}), 0) as total`,
-            `COALESCE(SUM(${Tables.STOCK}.${Columns.stock.costo}), 0) as costoTotal`,
+            `COALESCE((${Tables.PRODUCTS_PRINCIPAL}.${Columns.prodPrincipal.precio_compra} * SUM(${Tables.STOCK}.${Columns.stock.cant})), 0) as costoTotal`,
           ],
           filters,
           groupBy,

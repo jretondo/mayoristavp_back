@@ -603,10 +603,8 @@ export = (injectedStore: typeof StoreType) => {
         keyDir = pvData[0].key_file || 'drop.key';
         entornoAlt = true;
       }
-      console.log('certDir :>> ', certDir);
       const afip = new AfipClass(pvData[0].cuit, certDir, keyDir, entornoAlt);
       const lastfact = await afip.lastFact(pvData[0].pv, tipo);
-      console.log('lastfact :>> ', lastfact);
       if (lastfact.status === 200) {
         return {
           lastInvoice: Number(lastfact.data),

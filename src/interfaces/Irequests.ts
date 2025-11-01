@@ -57,6 +57,7 @@ export interface INewProduct {
   id_prod?: number;
   filesName?: Array<IObjectFiles>;
   min_stock: number;
+  es_oferta: boolean;
 }
 export interface INewStock {
   arrayBool: boolean;

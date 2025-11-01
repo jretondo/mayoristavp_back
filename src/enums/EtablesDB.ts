@@ -62,6 +62,7 @@ enum ProductosPrincipal {
   id_prod = 'id_prod',
   stock = 'stock',
   min_stock = 'min_stock',
+  es_oferta = 'es_oferta',
 }
 
 enum ProductsImg {
