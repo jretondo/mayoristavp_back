@@ -281,7 +281,7 @@ export = (injectedStore: typeof StoreType) => {
         const family = item.family;
         const category = [family];
         const saleCount = 100;
-        const nuevo = false;
+        const nuevo = Number(item.es_oferta) === 1 ? true : false;
         const discount = 0;
 
         const prices: Array<any> = [
