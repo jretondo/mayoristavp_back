@@ -22,6 +22,7 @@ import {
 import { INewProduct } from 'interfaces/Irequests';
 import { IImgProd } from 'interfaces/Itables';
 import StockController from '../stock';
+import { createProdListCSV } from '../../../utils/facturacion/lists/createListProductsExcel';
 
 export = (injectedStore: typeof StoreType) => {
   let store = injectedStore;
@@ -36,6 +37,7 @@ export = (injectedStore: typeof StoreType) => {
     brand?: string,
     stock?: boolean,
     esOferta?: boolean,
+    family?: string,
   ) => {
     let filter: IWhereParams | undefined = undefined;
     let filters: Array<IWhereParams> = [];
@@ -50,6 +52,7 @@ export = (injectedStore: typeof StoreType) => {
           { column: Columns.prodPrincipal.name, object: String(name) },
           { column: Columns.prodPrincipal.subcategory, object: String(brand) },
           { column: Columns.prodPrincipal.category, object: String(provider) },
+          { column: Columns.prodPrincipal.family, object: String(family) },
         ],
       };
       filters.push(filter);
@@ -506,7 +509,7 @@ export = (injectedStore: typeof StoreType) => {
     let filters: Array<IWhereParams> = [];
     let conID = false;
     let idProd = 0;
-    console.log('item :>> ', item);
+
     if (advanced) {
       filter = {
         mode: EModeWhere.like,
@@ -569,6 +572,82 @@ export = (injectedStore: typeof StoreType) => {
     );
 
     const prodList = await createProdListPDF(data);
+    return prodList;
+  };
+
+  const printCSV = async (
+    item?: string,
+    advanced?: boolean,
+    name?: string,
+    provider?: string,
+    brand?: string,
+  ) => {
+    let filter: IWhereParams | undefined = undefined;
+    let filters: Array<IWhereParams> = [];
+    let conID = false;
+    let idProd = 0;
+
+    if (advanced) {
+      filter = {
+        mode: EModeWhere.like,
+        concat: EConcatWhere.and,
+        items: [
+          { column: Columns.prodPrincipal.name, object: String(name) },
+          { column: Columns.prodPrincipal.subcategory, object: String(brand) },
+          { column: Columns.prodPrincipal.category, object: String(provider) },
+          { column: Columns.prodPrincipal.family, object: String(name) },
+        ],
+      };
+      filters.push(filter);
+    } else {
+      if (item) {
+        if (item.includes('id:')) {
+          conID = true;
+          idProd = Number(item.replace('id:', ''));
+        } else {
+          const arrayStr = item.split(' ');
+          arrayStr.map((subItem) => {
+            filter = {
+              mode: EModeWhere.like,
+              concat: EConcatWhere.or,
+              items: [
+                { column: Columns.prodPrincipal.name, object: String(subItem) },
+                {
+                  column: Columns.prodPrincipal.subcategory,
+                  object: String(subItem),
+                },
+                {
+                  column: Columns.prodPrincipal.category,
+                  object: String(subItem),
+                },
+                {
+                  column: Columns.prodPrincipal.short_decr,
+                  object: String(subItem),
+                },
+                {
+                  column: Columns.prodPrincipal.cod_barra,
+                  object: String(subItem),
+                },
+                {
+                  column: Columns.prodPrincipal.family,
+                  object: String(subItem),
+                },
+              ],
+            };
+            filters.push(filter);
+          });
+        }
+      }
+    }
+    const data = await store.list(
+      Tables.PRODUCTS_PRINCIPAL,
+      [ESelectFunct.all],
+      filters,
+      undefined,
+      undefined,
+      undefined,
+    );
+    const prodList = await createProdListCSV(data);
     return prodList;
   };
 
@@ -970,5 +1049,6 @@ export = (injectedStore: typeof StoreType) => {
     publicList,
     toggleProduct,
     toggleOferta,
+    printCSV,
   };
 };

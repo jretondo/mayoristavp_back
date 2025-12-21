@@ -19,6 +19,7 @@ const list = (req: Request, res: Response, next: NextFunction) => {
     String(req.query.brand),
     req.query.stock === 'true' ? true : false,
     req.query.esOferta === 'true' ? true : false,
+    String(req.query.family),
   )
     .then((lista: any) => {
       success({
@@ -45,6 +46,27 @@ const PDFList = (req: Request, res: Response, next: NextFunction) => {
         res,
         dataFact.filePath,
         'application/pdf',
+        dataFact.fileName,
+        dataFact,
+      );
+    })
+    .catch(next);
+};
+
+const CSVList = (req: Request, res: Response, next: NextFunction) => {
+  Controller.printCSV(
+    req.query.query ? String(req.query.query) : undefined,
+    Boolean(req.query.advanced),
+    req.query.name ? String(req.query.name) : undefined,
+    String(req.query.provider),
+    String(req.query.brand),
+  )
+    .then((dataFact: any) => {
+      file(
+        req,
+        res,
+        dataFact.filePath,
+        'text/csv',
         dataFact.fileName,
         dataFact,
       );
@@ -207,6 +229,7 @@ router.get('/details/:id', secure(EPermissions.productos), get);
 router.get('/getCat', getCategorys);
 router.get('/family', getFamily);
 router.get('/pdf', secure(EPermissions.productos), PDFList);
+router.get('/csv', secure(EPermissions.productos), CSVList);
 router.get('/getGetSubCat', getSubCategorys);
 router.get('/:page', secure(), list);
 router.put('/updateList', secure(EPermissions.productos), updateList);
