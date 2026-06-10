@@ -153,7 +153,7 @@
       </table>
     </main>   
     <%       
-      const extraMargin = 700 - pagina.length * 20;
+      const extraMargin = Math.max(0, 700 - pagina.length * 20);
     %>
     <% if (index === totalPaginas - 1) { %>
       <footer class="footer-final" style="margin-top: <%= extraMargin %>px;">
@@ -165,7 +165,7 @@
               <th style="border: 1px solid white;" class="total">
                 DESC.: <%- formatoPrecio(totalDesc) %>
               </th>
-              <th style="border: 1px solid white;" class="total" style="font-size: 1.2em;">TOTAL: $<%- totalFact %>
+              <th style="border: 1px solid white;" class="total" style="font-size: 1.2em;">TOTAL: <%- formatoPrecio(totalFact) %>
               </th>
             </tr>
           </thead>

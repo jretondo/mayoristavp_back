@@ -243,44 +243,41 @@ const calcProdLista = (
   productsList.sort((a, b) => {
     return a.id_prod - b.id_prod;
   });
-  return new Promise((resolve, reject) => {
-    let factura: IfactCalc = {
+  return (async () => {
+    const factura: IfactCalc = {
       listaProd: [],
       totalFact: 0,
       totalIva: 0,
       totalNeto: 0,
       totalCosto: 0,
     };
-    let ivaAlicuota = 0;
-    let alicuotaId = 0;
-    if (condIvaOrigen === 1) {
-      ivaAlicuota = 21;
-      alicuotaId = 5;
-    }
-    productsList.map(async (prod, key) => {
-      let dataProd: Array<INewProduct> = [];
+    const ivaAlicuota = condIvaOrigen === 1 ? 21 : 0;
+    const alicuotaId = condIvaOrigen === 1 ? 5 : 0;
+
+    for (const prod of productsList) {
+      let dataProd: Array<INewProduct>;
       if (prod.id_prod === idAnt) {
         dataProd = dataAnt;
       } else {
-        dataProd = await (
-          await prodController.getPrincipal(prod.id_prod)
-        ).productGral;
+        dataProd = (await prodController.getPrincipal(prod.id_prod)).productGral;
       }
       idAnt = prod.id_prod;
       dataAnt = dataProd;
 
-      const totalCosto = dataProd[0].precio_compra * prod.cant_prod;
+      if (!dataProd[0]) {
+        throw new Error(`Producto no encontrado: ${prod.id_prod}`);
+      }
 
+      const descuentoPorcentaje = Number(prod.descuento_porcentaje) || 0;
+      const totalCosto = dataProd[0].precio_compra * prod.cant_prod;
       const totalProd =
         dataProd[0].vta_price *
         prod.cant_prod *
-        (1 - (prod.descuento_porcentaje || 0) / 100);
-
+        (1 - descuentoPorcentaje / 100);
       const totalNeto = totalProd / (1 + ivaAlicuota / 100);
-
       const totalIva = totalNeto * (ivaAlicuota / 100);
 
-      const newProdFact: IDetFactura = {
+      factura.listaProd.push({
         nombre_prod: dataProd[0].name,
         cant_prod: prod.cant_prod,
         unidad_tipo_prod: dataProd[0].unidad,
@@ -291,23 +288,22 @@ const calcProdLista = (
         total_costo: roundNumber(totalCosto),
         total_neto: roundNumber(totalNeto),
         precio_ind: dataProd[0].vta_price,
-        descuento_porcentaje: prod.descuento_porcentaje || 0,
+        descuento_porcentaje: descuentoPorcentaje,
         cant_anulada: 0,
-      };
+      });
 
-      factura.listaProd.push(newProdFact);
-      factura.totalFact = factura.totalFact + roundNumber(totalProd);
-      factura.totalIva = factura.totalIva + roundNumber(totalIva);
-      factura.totalNeto = factura.totalNeto + roundNumber(totalNeto);
-      factura.totalCosto = factura.totalCosto + roundNumber(totalCosto);
+      factura.totalFact += roundNumber(totalProd);
+      factura.totalIva += roundNumber(totalIva);
+      factura.totalNeto += roundNumber(totalNeto);
+      factura.totalCosto += roundNumber(totalCosto);
+    }
 
-      if (key === productsList.length - 1) {
-        factura.totalIva = roundNumber(factura.totalIva);
-        factura.totalNeto = roundNumber(factura.totalNeto);
-        resolve(factura);
-      }
-    });
-  });
+    factura.totalFact = roundNumber(factura.totalFact);
+    factura.totalIva = roundNumber(factura.totalIva);
+    factura.totalNeto = roundNumber(factura.totalNeto);
+    factura.totalCosto = roundNumber(factura.totalCosto);
+    return factura;
+  })();
 };
 
 const listaIva = async (

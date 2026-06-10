@@ -17,7 +17,6 @@ import {
   FactMonotribProd,
   FactMonotribServ,
 } from './AfipClass';
-import { formatMoney } from '../formatMoney';
 import puppeteer from 'puppeteer';
 
 export const invoicePDFMiddle = () => {
@@ -223,23 +222,16 @@ export const invoicePDFMiddle = () => {
         provinciaCliente: newFact.provincia || '',
       };
 
+      const totalNeto = Math.abs(Number(newFact.total_neto) || 0);
+      const totalIva = Math.abs(Number(newFact.total_iva) || 0);
+      const totalFact = Math.abs(Number(newFact.total_fact) || 0);
+      const totalDesc = Math.abs(Number(newFact.descuento) || 0);
       const totales = {
-        subTotal: formatMoney(
-          (newFact.total_neto < 0 ? -newFact.total_neto : newFact.total_neto) +
-            (newFact.descuento < 0 ? -newFact.descuento : newFact.descuento),
-        ),
-        subTotalNoFiscal: formatMoney(
-          (newFact.total_neto < 0 ? -newFact.total_neto : newFact.total_neto) +
-            (newFact.total_iva < 0 ? -newFact.total_iva : newFact.total_iva) +
-            (newFact.descuento < 0 ? -newFact.descuento : newFact.descuento),
-        ),
-        totalIva: formatMoney(
-          newFact.total_iva < 0 ? -newFact.total_iva : newFact.total_iva,
-        ),
-        totalFact: formatMoney(
-          newFact.total_fact < 0 ? -newFact.total_fact : newFact.total_fact,
-        ),
-        totalDesc: formatMoney(newFact.descuento),
+        subTotal: totalNeto + totalDesc,
+        subTotalNoFiscal: totalNeto + totalIva + totalDesc,
+        totalIva,
+        totalFact,
+        totalDesc,
       };
       let formapagoStr = '';
       switch (newFact.forma_pago) {

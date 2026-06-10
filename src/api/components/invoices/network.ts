@@ -108,6 +108,22 @@ const newOrder = (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
+const forceNonFiscalOrder = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  if (!req.body.dataFact) {
+    return next(new Error('Faltan datos para generar la orden de pedido'));
+  }
+
+  req.body.fiscal = 0;
+  req.body.dataFact.fiscal = false;
+  req.body.dataFact.t_fact = 0;
+  req.body.dataFact.enviar_email = false;
+  next();
+};
+
 const getDataFactPDF = (req: Request, res: Response, next: NextFunction) => {
   if (req.query.sendEmail) {
     success({ req, res });
@@ -362,6 +378,7 @@ router
   .post(
     '/orderPDF',
     secure(EPermissions.ventas),
+    forceNonFiscalOrder,
     factuMiddel(),
     fiscalMiddle(),
     invoicePDFMiddle(),
