@@ -2,7 +2,7 @@ import ControllerInvoices from '../../api/components/invoices';
 import { NextFunction, Request, Response } from 'express';
 import { INewPV } from 'interfaces/Irequests';
 import { IFactura } from 'interfaces/Itables';
-import { AfipClass } from './AfipClass';
+import { AfipClass, CbteTipos, DocTipos } from './AfipClass';
 
 export const fiscalMiddle = () => {
   const middleware = async (
@@ -43,6 +43,13 @@ export const fiscalMiddle = () => {
       }
 
       if (newFact.fiscal) {
+        if (
+          Number(dataFiscal.CbteTipo) === CbteTipos['Factura B'] &&
+          Number(dataFiscal.DocTipo) === DocTipos['Sin identificar']
+        ) {
+          dataFiscal.DocNro = 0;
+        }
+
         let certDir = 'drop_test.crt';
         let keyDir = 'drop.key';
         let entornoAlt = false;
