@@ -144,7 +144,13 @@
             <th class="unit" style="text-align: right; background-color: #cfcfcf;">CANT.</th>
             <th class="unit" style="text-align: left; background-color: #cfcfcf;">DESCRIPCION</th>
             <% if(!noPrice){ %>
-            <th class="unit" style="text-align: right;background-color: #cfcfcf;"> PRECIO UNIT.</th>        
+            <th class="unit" style="text-align: right;background-color: #cfcfcf;">
+              <%- discriminaIva ? 'PRECIO UNIT. NETO' : 'PRECIO UNIT.' %>
+            </th>
+            <% if(discriminaIva){ %>
+            <th class="unit" style="text-align: right;background-color: #cfcfcf;">IVA %</th>
+            <th class="unit" style="text-align: right;background-color: #cfcfcf;">IVA</th>
+            <% } %>
             <th class="unit" style="text-align: right;background-color: #cfcfcf;"> DESCUENTO (%)</th>            
             <th class="unit" style="text-align: right;background-color: #cfcfcf;">TOTAL</th>
             <% } %>
@@ -153,7 +159,8 @@
         <tbody>
           <% pagina.forEach(function(item){ %>
             <%- include('./ItemFactNoFiscal.ejs', { itemName: upperCase(item.nombre_prod), itemPrice: item.precio_ind, itemCant:
-              item.cant_prod, itemTotal: item.total_prod, tipoUn: item.unidad_tipo_prod, noPrice, itemDescuento: item.descuento_porcentaje}); %>
+              item.cant_prod, itemTotal: item.total_prod, tipoUn: item.unidad_tipo_prod, noPrice, itemDescuento: item.descuento_porcentaje,
+              discriminaIva, itemPrecioNeto: item.precio_neto, itemIvaPorcentaje: item.alicuota_porcentaje, itemIva: item.total_iva}); %>
               <% }); %>
         </tbody>
         <tfoot>
@@ -168,8 +175,18 @@
         <table border="0" cellspacing="0" cellpadding="0">
           <thead>
             <tr>
-              <th style="border: 1px solid white;" class="total">SUB-TOTAL: <%- formatoPrecio(subTotalNoFiscal) %>
-              </th>
+              <% if(discriminaIva){ %>
+                <th style="border: 1px solid white;" class="total">
+                  NETO GRAVADO: <%- formatoPrecio(netoGravado) %>
+                </th>
+                <th style="border: 1px solid white;" class="total">
+                  IVA 21%: <%- formatoPrecio(totalIva) %>
+                </th>
+              <% }else{ %>
+                <th style="border: 1px solid white;" class="total">
+                  SUB-TOTAL: <%- formatoPrecio(subTotalNoFiscal) %>
+                </th>
+              <% } %>
               <th style="border: 1px solid white;" class="total">
                 DESC.: <%- formatoPrecio(totalDesc) %>
               </th>

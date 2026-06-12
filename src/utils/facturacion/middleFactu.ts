@@ -36,9 +36,11 @@ const factuMiddel = () => {
       let user: IUser = req.body.user;
       const pvId = body.pv_id;
       const pvData: Array<INewPV> = await ptosVtaController.get(pvId);
+      const condIvaOrigen = Number(pvData[0].cond_iva);
+      const discriminaIva = condIvaOrigen === 1;
       const productsList: IfactCalc = await calcProdLista(
         body.lista_prod,
-        Number(pvData[0].cond_iva),
+        condIvaOrigen,
       );
       const fiscalBool = req.body.fiscal;
       const variosPagos = body.variosPagos;
@@ -164,10 +166,9 @@ const factuMiddel = () => {
         user_id: user.id || 0,
         seller_name: `${user.nombre} ${user.apellido}`,
         total_fact: roundNumber(productsList.totalFact),
-        total_iva:
-          pvData[0].cond_iva === 1 ? roundNumber(productsList.totalIva) : 0,
+        total_iva: discriminaIva ? roundNumber(productsList.totalIva) : 0,
         total_neto:
-          pvData[0].cond_iva === 1
+          discriminaIva
             ? roundNumber(productsList.totalNeto)
             : roundNumber(productsList.totalFact),
         total_compra: roundNumber(productsList.totalCosto),
@@ -210,14 +211,13 @@ const factuMiddel = () => {
           Concepto: Conceptos.Productos,
           ImpTotConc: 0,
           ImpNeto:
-            pvData[0].cond_iva === 1
+            discriminaIva
               ? roundNumber(productsList.totalNeto)
               : roundNumber(productsList.totalFact),
           ImpOpEx: 0,
-          ImpIVA:
-            pvData[0].cond_iva === 1 ? roundNumber(productsList.totalIva) : 0,
+          ImpIVA: discriminaIva ? roundNumber(productsList.totalIva) : 0,
           ImpTrib: 0,
-          Iva: pvData[0].cond_iva === 1 ? ivaList : null,
+          Iva: discriminaIva ? ivaList : null,
         };
       }
       req.body.newFact = newFact;

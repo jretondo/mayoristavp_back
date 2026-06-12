@@ -10,8 +10,12 @@ minimumFractionDigits: 2, maximumFractionDigits: 2 }); } %>
   <td class="unit" style="text-align: left"><%- itemName %></td>
   <% if(!noPrice){ %>
   <td class="unit" style="text-align: right">
-    <%- formatoPrecio(itemPrice) %>
+    <%- formatoPrecio(discriminaIva ? itemPrecioNeto : itemPrice) %>
   </td>
+  <% if(discriminaIva){ %>
+  <td class="unit" style="text-align: right"><%- itemIvaPorcentaje %> %</td>
+  <td class="unit" style="text-align: right"><%- formatoPrecio(itemIva) %></td>
+  <% } %>
   <td class="unit" style="text-align: right"><%- itemDescuento %> %</td>
   <td class="unit" style="text-align: right">
     <%- formatoPrecio(itemTotal) %>

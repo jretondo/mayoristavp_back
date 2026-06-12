@@ -222,16 +222,37 @@ export const invoicePDFMiddle = () => {
         provinciaCliente: newFact.provincia || '',
       };
 
-      const totalNeto = Math.abs(Number(newFact.total_neto) || 0);
-      const totalIva = Math.abs(Number(newFact.total_iva) || 0);
       const totalFact = Math.abs(Number(newFact.total_fact) || 0);
       const totalDesc = Math.abs(Number(newFact.descuento) || 0);
+      const tipoComprobante = Number(newFact.t_fact);
+      const discriminaIva =
+        Boolean(Number(newFact.fiscal)) &&
+        Number(pvData.cond_iva) ===
+          condFiscalIva['IVA Responsable Inscripto'] &&
+        [CbteTipos['Factura A'], CbteTipos['Factura B']].includes(
+          tipoComprobante,
+        );
+      const totalIvaGuardado = Math.abs(Number(newFact.total_iva) || 0);
+      const totalNetoGuardado = Math.abs(Number(newFact.total_neto) || 0);
+      const tieneDesgloseGuardado =
+        totalIvaGuardado > 0 &&
+        Math.abs(totalNetoGuardado + totalIvaGuardado - totalFact) < 0.02;
+      const totalNeto =
+        discriminaIva && !tieneDesgloseGuardado
+          ? Math.round((totalFact / 1.21) * 100) / 100
+          : totalNetoGuardado;
+      const totalIva =
+        discriminaIva && !tieneDesgloseGuardado
+          ? Math.round((totalFact - totalNeto) * 100) / 100
+          : totalIvaGuardado;
       const totales = {
         subTotal: totalNeto + totalDesc,
         subTotalNoFiscal: totalNeto + totalIva + totalDesc,
+        netoGravado: totalNeto,
         totalIva,
         totalFact,
         totalDesc,
+        discriminaIva,
       };
       let formapagoStr = '';
       switch (newFact.forma_pago) {
@@ -265,7 +286,39 @@ export const invoicePDFMiddle = () => {
         string: formapagoStr,
         code: newFact.forma_pago,
       };
-      const listaItems = productsList;
+      const listaItems = productsList.map((item) => {
+        if (!discriminaIva) {
+          return item;
+        }
+
+        const cantidad = Math.abs(Number(item.cant_prod) || 0);
+        const totalItem = Math.abs(Number(item.total_prod) || 0);
+        const precioUnitario = Math.abs(Number(item.precio_ind) || 0);
+        const netoGuardado = Math.abs(Number(item.total_neto) || 0);
+        const ivaGuardado = Math.abs(Number(item.total_iva) || 0);
+        const tieneDesgloseItem =
+          ivaGuardado > 0 &&
+          Math.abs(netoGuardado + ivaGuardado - totalItem) < 0.02;
+        const netoItem = tieneDesgloseItem
+          ? netoGuardado
+          : Math.round((totalItem / 1.21) * 100) / 100;
+        const ivaItem = tieneDesgloseItem
+          ? ivaGuardado
+          : Math.round((totalItem - netoItem) * 100) / 100;
+
+        return {
+          ...item,
+          precio_neto:
+            precioUnitario > 0
+              ? Math.round((precioUnitario / 1.21) * 100) / 100
+              : cantidad > 0
+                ? Math.round((netoItem / cantidad) * 100) / 100
+                : 0,
+          total_neto: netoItem,
+          total_iva: ivaItem,
+          alicuota_porcentaje: 21,
+        };
+      });
 
       const maxItemsPorPagina = 35;
       const paginasItems = dividirEnPaginas(listaItems, maxItemsPorPagina);
