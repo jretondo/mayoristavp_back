@@ -24,6 +24,9 @@ const devFactMiddle = () => {
     const pvData: Array<INewPV> = await ControllerPtoVta.get(dataFact[0].pv_id);
     const esFiscal = dataFact[0].fiscal;
     const tipoFact = dataFact[0].t_fact;
+    const discriminaIva =
+      Number(dataFact[0].cond_iva_origen) === 1 &&
+      [1, 6, 51].includes(Number(tipoFact));
 
     let pagos: Array<IFormasPago> = await ControllerInvoices.getFormasPago(
       idFact,
@@ -166,7 +169,7 @@ const devFactMiddle = () => {
           (dataFact[0].total_fact + dataFact[0].descuento)) *
         100;
 
-      ivaList = await listaIva(detFact, descuentoPer);
+      ivaList = discriminaIva ? await listaIva(detFact, descuentoPer) : [];
       dataFiscal = {
         CantReg: 1,
         PtoVta: dataFact[0].pv,
@@ -183,7 +186,7 @@ const devFactMiddle = () => {
         ImpOpEx: 0,
         ImpIVA: -newFact.total_iva,
         ImpTrib: 0,
-        Iva: dataFact[0].cond_iva_origen === 1 ? ivaList : null,
+        ...(discriminaIva ? { Iva: ivaList } : {}),
         CbtesAsoc: [
           {
             Tipo: dataFact[0].t_fact,
@@ -194,6 +197,27 @@ const devFactMiddle = () => {
         ],
       };
     }
+    console.log('[ANULACION][devFactMiddle][prepared]', JSON.stringify({
+      idFact,
+      parcial,
+      original: {
+        fiscal: esFiscal,
+        t_fact: tipoFact,
+        cbte: dataFact[0].cbte,
+        pv: dataFact[0].pv,
+        total_fact: dataFact[0].total_fact,
+        total_neto: dataFact[0].total_neto,
+        total_iva: dataFact[0].total_iva,
+        tipo_doc_cliente: dataFact[0].tipo_doc_cliente,
+        n_doc_cliente: dataFact[0].n_doc_cliente,
+        cond_iva_origen: dataFact[0].cond_iva_origen,
+      },
+      newFact,
+      discriminaIva,
+      dataFiscal,
+      productsList: newDet,
+      pagos,
+    }, null, 2));
     req.body.newFact = newFact;
     req.body.dataFiscal = dataFiscal;
     req.body.pvData = pvData[0];
@@ -218,7 +242,7 @@ const listaIva = async (
     return new Promise((resolve, reject) => {
       listaProd.map((item, key) => {
         let ivaAux = perIvaAlicuotas.find(
-          (e) => e.per === item.alicuota_id,
+          (e) => e.id === item.alicuota_id,
         ) || { per: 0, id: 3 };
         const iva = ivaAux.id;
         if (iva !== ivaAnt) {
@@ -255,7 +279,7 @@ const listaIva = async (
             };
           }
         }
-        ivaAnt = 5;
+        ivaAnt = iva;
         if (key === listaProd.length - 1) {
           const newList: Array<IIvaItem> = [];
           listaIva.map((item, key2) => {

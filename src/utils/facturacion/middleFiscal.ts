@@ -43,10 +43,7 @@ export const fiscalMiddle = () => {
       }
 
       if (newFact.fiscal) {
-        if (
-          Number(dataFiscal.CbteTipo) === CbteTipos['Factura B'] &&
-          Number(dataFiscal.DocTipo) === DocTipos['Sin identificar']
-        ) {
+        if (Number(dataFiscal.DocTipo) === DocTipos['Sin identificar']) {
           dataFiscal.DocNro = 0;
         }
 
@@ -59,14 +56,48 @@ export const fiscalMiddle = () => {
           keyDir = pvData.key_file || 'drop.key';
           entornoAlt = true;
         }
-        console.log('newFact.cuit_origen :>> ', newFact.cuit_origen);
         const afip = new AfipClass(
           newFact.cuit_origen,
           certDir,
           keyDir,
           entornoAlt,
         );
+
+        console.log('[AFIP][middleFiscal][beforeNewFact]', safeJson({
+          endpoint: req.originalUrl,
+          userId: req.body.user_id,
+          pv: {
+            id: pvData.id,
+            pv: pvData.pv,
+            cond_iva: pvData.cond_iva,
+            cuit: pvData.cuit,
+          },
+          factura: {
+            letra: newFact.letra,
+            t_fact: newFact.t_fact,
+            fiscal: newFact.fiscal,
+            total_fact: newFact.total_fact,
+            total_neto: newFact.total_neto,
+            total_iva: newFact.total_iva,
+            tipo_doc_cliente: newFact.tipo_doc_cliente,
+            n_doc_cliente: newFact.n_doc_cliente,
+            cond_iva_cliente: newFact.cond_iva_cliente,
+          },
+          dataFiscal,
+          productsList: req.body.productsList,
+        }));
+
         const newDataFiscal = await afip.newFact(dataFiscal);
+
+        console.log('[AFIP][middleFiscal][afterNewFact]', safeJson({
+          status: newDataFiscal.status,
+          data: newDataFiscal.data,
+        }));
+
+        if (Number(newDataFiscal.status) !== 200) {
+          throw new Error(`AFIP rechazo la factura: ${newDataFiscal.data}`);
+        }
+
         req.body.dataFiscal = newDataFiscal.data;
         req.body.dataFiscal.CbteTipo = String(newFact.t_fact);
         req.body.newFact.cbte = req.body.dataFiscal.CbteDesde;
@@ -87,13 +118,63 @@ export const fiscalMiddle = () => {
         next();
       }
     } catch (error) {
-      console.error(error);
-      console.log('dataFiscal :>> ', req.body.dataFiscal);
-      console.log('dataFiscal IVA :>> ', req.body.dataFiscal.Iva);
-      console.log('newFact :>> ', req.body.newFact);
-      console.log('productsList :>> ', req.body.productsList);
+      console.error('[AFIP][middleFiscal][error]', safeJson({
+        endpoint: req.originalUrl,
+        userId: req.body.user_id,
+        error: serializeError(error),
+        dataFiscal: req.body.dataFiscal,
+        dataFiscalIva: req.body.dataFiscal && req.body.dataFiscal.Iva,
+        newFact: req.body.newFact,
+        pvData: req.body.pvData,
+        productsList: req.body.productsList,
+      }));
       next(new Error('Faltan datos o hay datos erroneos, controlelo!'));
     }
   };
   return middleware;
+};
+
+const serializeError = (error: any) => {
+  if (!error) {
+    return error;
+  }
+
+  return {
+    name: error.name,
+    message: error.message,
+    code: error.code,
+    stack: error.stack,
+    response: error.response,
+    fault: error.fault,
+    details: error.details,
+    errors: error.errors,
+    raw: error,
+  };
+};
+
+const safeJson = (data: any): string => {
+  const seen = new WeakSet();
+
+  try {
+    return JSON.stringify(
+      data,
+      (_key, value) => {
+        if (typeof value === 'bigint') {
+          return value.toString();
+        }
+
+        if (typeof value === 'object' && value !== null) {
+          if (seen.has(value)) {
+            return '[Circular]';
+          }
+          seen.add(value);
+        }
+
+        return value;
+      },
+      2,
+    );
+  } catch (error) {
+    return String(data);
+  }
 };

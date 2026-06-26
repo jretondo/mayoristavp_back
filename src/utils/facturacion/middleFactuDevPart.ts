@@ -379,7 +379,7 @@ const listaIva = async (
     return new Promise((resolve, reject) => {
       listaProd.map((item, key) => {
         let ivaAux = perIvaAlicuotas.find(
-          (e) => e.per === item.alicuota_id,
+          (e) => e.id === item.alicuota_id,
         ) || { per: 0, id: 3 };
         const iva = ivaAux.id;
         if (iva !== ivaAnt) {
@@ -416,7 +416,7 @@ const listaIva = async (
             };
           }
         }
-        ivaAnt = 5;
+        ivaAnt = iva;
         if (key === listaProd.length - 1) {
           const newList: Array<IIvaItem> = [];
           listaIva.map((item, key2) => {

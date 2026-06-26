@@ -12,6 +12,7 @@ import prodController from '../../api/components/products';
 import {
   AlicuotasIva,
   Conceptos,
+  DocTipos,
   FactInscriptoProd,
   FactInscriptoServ,
   FactMonotribProd,
@@ -37,16 +38,19 @@ const factuMiddel = () => {
       const pvId = body.pv_id;
       const pvData: Array<INewPV> = await ptosVtaController.get(pvId);
       const condIvaOrigen = Number(pvData[0].cond_iva);
-      const discriminaIva = condIvaOrigen === 1;
-      const productsList: IfactCalc = await calcProdLista(
-        body.lista_prod,
-        condIvaOrigen,
-      );
       const fiscalBool = req.body.fiscal;
-      const variosPagos = body.variosPagos;
       if (parseInt(fiscalBool) === 0) {
         body.fiscal = false;
       }
+      const aplicaIva =
+        Boolean(body.fiscal) &&
+        condIvaOrigen === 1 &&
+        [1, 6, 51].includes(Number(body.t_fact));
+      const productsList: IfactCalc = await calcProdLista(
+        body.lista_prod,
+        aplicaIva,
+      );
+      const variosPagos = body.variosPagos;
 
       if (!body.cliente_bool) {
         delete body.cliente_id;
@@ -108,6 +112,14 @@ const factuMiddel = () => {
       body.cliente_id &&
         body.cliente_id > 0 &&
         (clienteData = await clientesController.get(body.cliente_id));
+      const tipoDocCliente =
+        clienteData.length > 0
+          ? getDocTipoCliente(clienteData[0].cuit)
+          : DocTipos['Sin identificar'];
+      const nroDocCliente =
+        tipoDocCliente === DocTipos['Sin identificar']
+          ? 0
+          : Number(clienteData[0].ndoc);
 
       req.body.user_id &&
         (user = await usuariosController
@@ -152,12 +164,8 @@ const factuMiddel = () => {
         direccion_origen: pvData[0].direccion,
         raz_soc_origen: pvData[0].raz_soc,
         cond_iva_origen: pvData[0].cond_iva,
-        tipo_doc_cliente: body.cliente_id
-          ? clienteData[0].cuit
-            ? 99
-            : 80
-          : 99,
-        n_doc_cliente: body.cliente_id ? Number(clienteData[0].ndoc) : 0,
+        tipo_doc_cliente: tipoDocCliente,
+        n_doc_cliente: nroDocCliente,
         cond_iva_cliente: body.cliente_id ? clienteData[0].cond_iva : 0,
         email_cliente: body.enviar_email ? body.cliente_email || '' : '',
         nota_cred: false,
@@ -166,9 +174,9 @@ const factuMiddel = () => {
         user_id: user.id || 0,
         seller_name: `${user.nombre} ${user.apellido}`,
         total_fact: roundNumber(productsList.totalFact),
-        total_iva: discriminaIva ? roundNumber(productsList.totalIva) : 0,
+        total_iva: aplicaIva ? roundNumber(productsList.totalIva) : 0,
         total_neto:
-          discriminaIva
+          aplicaIva
             ? roundNumber(productsList.totalNeto)
             : roundNumber(productsList.totalFact),
         total_compra: roundNumber(productsList.totalCosto),
@@ -198,12 +206,8 @@ const factuMiddel = () => {
           CantReg: 1,
           PtoVta: pvData[0].pv,
           CbteTipo: body.t_fact,
-          DocTipo: body.cliente_id
-            ? Number(clienteData[0].cuit) === 0
-              ? 80
-              : 99
-            : 99,
-          DocNro: body.cliente_id ? Number(clienteData[0].ndoc) : 0,
+          DocTipo: tipoDocCliente,
+          DocNro: nroDocCliente,
           CbteFch: moment(body.fecha, 'YYYY-MM-DD').format('YYYYMMDD'),
           ImpTotal: roundNumber(productsList.totalFact),
           MonCotiz: 1,
@@ -211,13 +215,13 @@ const factuMiddel = () => {
           Concepto: Conceptos.Productos,
           ImpTotConc: 0,
           ImpNeto:
-            discriminaIva
+            aplicaIva
               ? roundNumber(productsList.totalNeto)
               : roundNumber(productsList.totalFact),
           ImpOpEx: 0,
-          ImpIVA: discriminaIva ? roundNumber(productsList.totalIva) : 0,
+          ImpIVA: aplicaIva ? roundNumber(productsList.totalIva) : 0,
           ImpTrib: 0,
-          Iva: discriminaIva ? ivaList : null,
+          ...(aplicaIva ? { Iva: ivaList } : {}),
         };
       }
       req.body.newFact = newFact;
@@ -236,7 +240,7 @@ const factuMiddel = () => {
 
 const calcProdLista = (
   productsList: INewFactura['lista_prod'],
-  condIvaOrigen: number,
+  aplicaIva: boolean,
 ): Promise<IfactCalc> => {
   let dataAnt: Array<INewProduct> = [];
   let idAnt: number = 0;
@@ -251,8 +255,6 @@ const calcProdLista = (
       totalNeto: 0,
       totalCosto: 0,
     };
-    const ivaAlicuota = condIvaOrigen === 1 ? 21 : 0;
-    const alicuotaId = condIvaOrigen === 1 ? 5 : 0;
 
     for (const prod of productsList) {
       let dataProd: Array<INewProduct>;
@@ -269,13 +271,18 @@ const calcProdLista = (
       }
 
       const descuentoPorcentaje = Number(prod.descuento_porcentaje) || 0;
+      const ivaAlicuota = aplicaIva ? Number(dataProd[0].iva) || 0 : 0;
+      const alicuotaId = aplicaIva ? getAlicuotaId(ivaAlicuota) : 0;
       const totalCosto = dataProd[0].precio_compra * prod.cant_prod;
       const totalProd =
         dataProd[0].vta_price *
         prod.cant_prod *
         (1 - descuentoPorcentaje / 100);
-      const totalNeto = totalProd / (1 + ivaAlicuota / 100);
-      const totalIva = totalNeto * (ivaAlicuota / 100);
+      const totalNeto =
+        aplicaIva && ivaAlicuota > 0
+          ? totalProd / (1 + ivaAlicuota / 100)
+          : totalProd;
+      const totalIva = aplicaIva ? totalProd - totalNeto : 0;
 
       factura.listaProd.push({
         nombre_prod: dataProd[0].name,
@@ -357,7 +364,7 @@ const listaIva = async (
             };
           }
         }
-        ivaAnt = 5;
+        ivaAnt = iva;
         if (key === listaProd.length - 1) {
           const newList: Array<IIvaItem> = [];
           listaIva.map((item, key2) => {
@@ -377,6 +384,33 @@ const listaIva = async (
     return listaIva;
   }
 };
+
+const getAlicuotaId = (ivaAlicuota: number): number => {
+  const alicuota = perIvaAlicuotas.find(
+    (item) => Number(item.per) === Number(ivaAlicuota),
+  );
+
+  if (!alicuota) {
+    throw new Error(`Alicuota de IVA no valida: ${ivaAlicuota}`);
+  }
+
+  return alicuota.id;
+};
+
+const getDocTipoCliente = (tipoDoc: number | boolean): DocTipos => {
+  const tipo = Number(tipoDoc);
+
+  if (tipo === 0) {
+    return DocTipos['CUIT'];
+  }
+
+  if (tipo === 1) {
+    return DocTipos['DNI'];
+  }
+
+  return DocTipos['Sin identificar'];
+};
+
 interface IfactCalc {
   listaProd: Array<IDetFactura>;
   totalFact: number;

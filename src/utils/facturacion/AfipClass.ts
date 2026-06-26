@@ -125,24 +125,69 @@ export class AfipClass {
             | FactInscriptoServ
             | string | any
         }> {
-        const nfact = await this.lastFact(data.PtoVta, data.CbteTipo);
-        if (nfact.status === 200) {
-            data.CbteDesde = Number(nfact.data) + 1;
-            data.CbteHasta = data.CbteDesde
-            const dataFact = await this.afip.ElectronicBilling.createVoucher(data);
-            data.CAE = dataFact.CAE;
-            data.CAEFchVto = dataFact.CAEFchVto;
-            const response = {
-                status: resStatus.ok,
-                data: data
+        const logContext = {
+            cuit: this.CUIT,
+            ptoVta: data.PtoVta,
+            cbteTipo: data.CbteTipo,
+            docTipo: data.DocTipo,
+            docNro: data.DocNro,
+            impTotal: data.ImpTotal,
+            impNeto: data.ImpNeto,
+            impIVA: data.ImpIVA,
+            production: this.production,
+        };
+
+        console.log('[AFIP][newFact][start]', safeJson(logContext));
+
+        try {
+            const nfact = await this.lastFact(data.PtoVta, data.CbteTipo);
+            console.log('[AFIP][newFact][lastFact]', safeJson({
+                ...logContext,
+                lastFactStatus: nfact.status,
+                lastFactData: nfact.data,
+            }));
+
+            if (nfact.status === 200) {
+                data.CbteDesde = Number(nfact.data) + 1;
+                data.CbteHasta = data.CbteDesde
+                console.log('[AFIP][newFact][request]', safeJson(data));
+
+                const dataFact = await this.afip.ElectronicBilling.createVoucher(data);
+                console.log('[AFIP][newFact][rawResponse]', safeJson(dataFact));
+
+                data.CAE = dataFact.CAE;
+                data.CAEFchVto = dataFact.CAEFchVto;
+                const response = {
+                    status: resStatus.ok,
+                    data: data
+                }
+                console.log('[AFIP][newFact][success]', safeJson({
+                    ...logContext,
+                    cbteDesde: data.CbteDesde,
+                    cbteHasta: data.CbteHasta,
+                    cae: data.CAE,
+                    caeFchVto: data.CAEFchVto,
+                }));
+                return response;
+            } else {
+                const response = {
+                    status: resStatus.error,
+                    data: "Punto de venta o tipo de factura incorrecta."
+                }
+                console.error('[AFIP][newFact][lastFactError]', safeJson({
+                    ...logContext,
+                    lastFactStatus: nfact.status,
+                    lastFactData: nfact.data,
+                }));
+                return response;
             }
-            return response;
-        } else {
-            const response = {
-                status: resStatus.error,
-                data: "Punto de venta o tipo de factura incorrecta."
-            }
-            return response;
+        } catch (error) {
+            console.error('[AFIP][newFact][error]', safeJson({
+                ...logContext,
+                request: data,
+                error: serializeError(error),
+            }));
+            throw error;
         }
     }
     async getInvoiceInfo(ncbte: number, pv: number, tipo: CbteTipos): Promise<{
@@ -398,6 +443,51 @@ interface FactInscriptos {
         Importe: number
     }>
 }
+
+const serializeError = (error: any) => {
+    if (!error) {
+        return error;
+    }
+
+    return {
+        name: error.name,
+        message: error.message,
+        code: error.code,
+        stack: error.stack,
+        response: error.response,
+        fault: error.fault,
+        details: error.details,
+        errors: error.errors,
+        raw: error,
+    };
+};
+
+const safeJson = (data: any): string => {
+    const seen = new WeakSet();
+
+    try {
+        return JSON.stringify(
+            data,
+            (_key, value) => {
+                if (typeof value === 'bigint') {
+                    return value.toString();
+                }
+
+                if (typeof value === 'object' && value !== null) {
+                    if (seen.has(value)) {
+                        return '[Circular]';
+                    }
+                    seen.add(value);
+                }
+
+                return value;
+            },
+            2,
+        );
+    } catch (error) {
+        return String(data);
+    }
+};
 
 export interface FactMonotribProd extends FactBase, FactMonotrib, FactProductos {
 }

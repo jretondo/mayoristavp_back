@@ -16,6 +16,7 @@ import {
   FactInscriptoServ,
   FactMonotribProd,
   FactMonotribServ,
+  perIvaAlicuotas,
 } from './AfipClass';
 import puppeteer from 'puppeteer';
 
@@ -214,7 +215,12 @@ export const invoicePDFMiddle = () => {
         clienteEmail: newFact.email_cliente || '',
         clienteName: newFact.raz_soc_cliente || 'Consumidor Final',
         clienteNro: newFact.n_doc_cliente || '',
-        tipoDoc: newFact.tipo_doc_cliente === 80 ? 'CUIT' : 'DNI',
+        tipoDoc:
+          newFact.tipo_doc_cliente === 80
+            ? 'CUIT'
+            : newFact.tipo_doc_cliente === 96
+              ? 'DNI'
+              : '',
         condIvaCliente: condIvaStrCliente.toUpperCase(),
         direccionCliente: newFact.direccion_entrega || '',
         telefonoCliente: newFact.telefono || '',
@@ -229,9 +235,11 @@ export const invoicePDFMiddle = () => {
         Boolean(Number(newFact.fiscal)) &&
         Number(pvData.cond_iva) ===
           condFiscalIva['IVA Responsable Inscripto'] &&
-        [CbteTipos['Factura A'], CbteTipos['Factura B']].includes(
-          tipoComprobante,
-        );
+        [
+          CbteTipos['Factura A'],
+          CbteTipos['Factura B'],
+          CbteTipos['Factura M'],
+        ].includes(tipoComprobante);
       const totalIvaGuardado = Math.abs(Number(newFact.total_iva) || 0);
       const totalNetoGuardado = Math.abs(Number(newFact.total_neto) || 0);
       const tieneDesgloseGuardado =
@@ -296,27 +304,44 @@ export const invoicePDFMiddle = () => {
         const precioUnitario = Math.abs(Number(item.precio_ind) || 0);
         const netoGuardado = Math.abs(Number(item.total_neto) || 0);
         const ivaGuardado = Math.abs(Number(item.total_iva) || 0);
+        const alicuotaPorcentaje = getAlicuotaPorcentaje(item.alicuota_id);
+        const descuentoItem = Math.abs(
+          Number(item.descuento_porcentaje) || 0,
+        );
         const tieneDesgloseItem =
           ivaGuardado > 0 &&
           Math.abs(netoGuardado + ivaGuardado - totalItem) < 0.02;
         const netoItem = tieneDesgloseItem
           ? netoGuardado
-          : Math.round((totalItem / 1.21) * 100) / 100;
+          : Math.round(
+              (totalItem / (1 + alicuotaPorcentaje / 100)) * 100,
+            ) / 100;
         const ivaItem = tieneDesgloseItem
           ? ivaGuardado
           : Math.round((totalItem - netoItem) * 100) / 100;
+        const netoUnitario = cantidad > 0 ? netoItem / cantidad : 0;
+        const precioGuardadoEsNeto =
+          tieneDesgloseItem &&
+          precioUnitario > 0 &&
+          Math.abs(
+            precioUnitario * (1 - descuentoItem / 100) - netoUnitario,
+          ) < 0.02;
 
         return {
           ...item,
           precio_neto:
-            precioUnitario > 0
-              ? Math.round((precioUnitario / 1.21) * 100) / 100
-              : cantidad > 0
-                ? Math.round((netoItem / cantidad) * 100) / 100
-                : 0,
+            precioGuardadoEsNeto
+              ? precioUnitario
+              : precioUnitario > 0
+                ? Math.round(
+                    (precioUnitario / (1 + alicuotaPorcentaje / 100)) * 100,
+                  ) / 100
+                : cantidad > 0
+                  ? Math.round(netoUnitario * 100) / 100
+                  : 0,
           total_neto: netoItem,
           total_iva: ivaItem,
-          alicuota_porcentaje: 21,
+          alicuota_porcentaje: alicuotaPorcentaje,
         };
       });
 
@@ -397,3 +422,10 @@ function dividirEnPaginas(items: IDetFactura[], maxItemsPorPagina: number) {
   }
   return paginas;
 }
+
+const getAlicuotaPorcentaje = (alicuotaId: number): number => {
+  return (
+    perIvaAlicuotas.find((item) => Number(item.id) === Number(alicuotaId))
+      ?.per || 0
+  );
+};

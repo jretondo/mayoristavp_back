@@ -1,6 +1,6 @@
 {
   "name": "club-limp-back-ts",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Backend App for Club de la Limpieza admin made in TS",
   "main": "api/index.js",
   "scripts": {
