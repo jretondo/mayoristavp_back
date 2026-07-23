@@ -170,9 +170,14 @@
     <%       
       const extraMargin = Math.max(0, 600 - pagina.length * 20);
     %>
-    <% if (index === totalPaginas - 1) { %>
-      <footer class="footer-final" style="margin-top: <%= extraMargin %>px;">
-        <table border="0" cellspacing="0" cellpadding="0">
+      <% if (index === totalPaginas - 1) { %>
+        <footer class="footer-final" style="margin-top: <%= extraMargin %>px;">
+          <% if(leyendaFiscal){ %>
+            <div style="font-size: 9px; text-align: center; margin-bottom: 6px;">
+              <%- leyendaFiscal %>
+            </div>
+          <% } %>
+          <table border="0" cellspacing="0" cellpadding="0">
           <thead>
             <tr>
               <% if(discriminaIva){ %>

@@ -262,6 +262,16 @@ export const invoicePDFMiddle = () => {
         totalDesc,
         discriminaIva,
       };
+      const leyendaFiscal =
+        Boolean(Number(newFact.fiscal)) &&
+        [
+          CbteTipos['Factura A'],
+          CbteTipos['Factura M'],
+        ].includes(tipoComprobante) &&
+        Number(newFact.cond_iva_cliente) ===
+          condFiscalIva['Responsable Monotributo']
+          ? 'El credito fiscal discriminado en el presente comprobante, solo podra ser computado a efectos del Regimen de Sostenimiento e Inclusion Fiscal para Pequenos Contribuyentes de la Ley Nro. 27.618'
+          : '';
       let formapagoStr = '';
       switch (newFact.forma_pago) {
         case 0:
@@ -358,6 +368,7 @@ export const invoicePDFMiddle = () => {
         ...ptoVta,
         ...cliente,
         ...totales,
+        leyendaFiscal,
         ...footer,
         paginasItems: paginasItems,
         totalPaginas: paginasItems.length,

@@ -11,12 +11,14 @@ import ptosVtaController from '../../api/components/ptosVta';
 import prodController from '../../api/components/products';
 import {
   AlicuotasIva,
+  CbteTipos,
   Conceptos,
   DocTipos,
   FactInscriptoProd,
   FactInscriptoServ,
   FactMonotribProd,
   FactMonotribServ,
+  condFiscalIva,
   perIvaAlicuotas,
 } from './AfipClass';
 import moment from 'moment';
@@ -112,6 +114,17 @@ const factuMiddel = () => {
       body.cliente_id &&
         body.cliente_id > 0 &&
         (clienteData = await clientesController.get(body.cliente_id));
+      const condIvaCliente = body.cliente_id
+        ? Number(clienteData[0].cond_iva)
+        : condFiscalIva['Consumidor Final'];
+
+      validarTipoComprobanteFiscal(
+        Boolean(body.fiscal),
+        condIvaOrigen,
+        condIvaCliente,
+        Number(body.t_fact),
+      );
+
       const tipoDocCliente =
         clienteData.length > 0
           ? getDocTipoCliente(clienteData[0].cuit)
@@ -166,7 +179,7 @@ const factuMiddel = () => {
         cond_iva_origen: pvData[0].cond_iva,
         tipo_doc_cliente: tipoDocCliente,
         n_doc_cliente: nroDocCliente,
-        cond_iva_cliente: body.cliente_id ? clienteData[0].cond_iva : 0,
+        cond_iva_cliente: condIvaCliente,
         email_cliente: body.enviar_email ? body.cliente_email || '' : '',
         nota_cred: false,
         fiscal: body.fiscal,
@@ -395,6 +408,60 @@ const getAlicuotaId = (ivaAlicuota: number): number => {
   }
 
   return alicuota.id;
+};
+
+const validarTipoComprobanteFiscal = (
+  fiscal: boolean,
+  condIvaOrigen: number,
+  condIvaCliente: number,
+  tipoComprobante: number,
+) => {
+  if (!fiscal) {
+    return;
+  }
+
+  const origenResponsableInscripto =
+    condIvaOrigen === condFiscalIva['IVA Responsable Inscripto'];
+  const origenMonotributoOExento = [
+    condFiscalIva['Responsable Monotributo'],
+    condFiscalIva['Monotributista Social'],
+    condFiscalIva['IVA Sujeto Exento'],
+  ].includes(condIvaOrigen);
+
+  if (origenResponsableInscripto) {
+    const clienteRecibeClaseA = [
+      condFiscalIva['IVA Responsable Inscripto'],
+      condFiscalIva['Responsable Monotributo'],
+      condFiscalIva['Monotributista Social'],
+    ].includes(condIvaCliente);
+    const comprobantesClaseA = [
+      CbteTipos['Factura A'],
+      CbteTipos['Factura M'],
+    ];
+
+    if (clienteRecibeClaseA && !comprobantesClaseA.includes(tipoComprobante)) {
+      throw new Error(
+        'Un Responsable Inscripto debe emitir Factura A o M a Responsable Inscripto o Monotributista.',
+      );
+    }
+
+    if (!clienteRecibeClaseA && tipoComprobante !== CbteTipos['Factura B']) {
+      throw new Error(
+        'Un Responsable Inscripto debe emitir Factura B a Consumidor Final, Exento u otros sujetos no inscriptos.',
+      );
+    }
+
+    return;
+  }
+
+  if (
+    origenMonotributoOExento &&
+    tipoComprobante !== CbteTipos['Factura C']
+  ) {
+    throw new Error(
+      'Un punto de venta Monotributo o Exento debe emitir Factura C para operaciones locales.',
+    );
+  }
 };
 
 const getDocTipoCliente = (tipoDoc: number | boolean): DocTipos => {
