@@ -176,6 +176,7 @@ const devFactMiddle = () => {
         CbteTipo: newFact.t_fact,
         DocTipo: newFact.tipo_doc_cliente,
         DocNro: newFact.n_doc_cliente,
+        CondicionIVAReceptorId: newFact.cond_iva_cliente,
         CbteFch: moment(newFact.fecha, 'YYYY-MM-DD').format('YYYYMMDD'),
         ImpTotal: -newFact.total_fact,
         MonCotiz: 1,

@@ -392,6 +392,7 @@ interface FactBase {
     CbteTipo: CbteTipos,
     DocTipo: DocTipos,
     DocNro: number,
+    CondicionIVAReceptorId?: condFiscalIva,
     CbteFch: string,
     ImpTotal: number,
     MonCotiz: 1,

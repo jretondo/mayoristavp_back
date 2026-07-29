@@ -114,9 +114,7 @@ const factuMiddel = () => {
       body.cliente_id &&
         body.cliente_id > 0 &&
         (clienteData = await clientesController.get(body.cliente_id));
-      const condIvaCliente = body.cliente_id
-        ? Number(clienteData[0].cond_iva)
-        : condFiscalIva['Consumidor Final'];
+      const condIvaCliente = getCondIvaCliente(body, clienteData);
 
       validarTipoComprobanteFiscal(
         Boolean(body.fiscal),
@@ -221,6 +219,7 @@ const factuMiddel = () => {
           CbteTipo: body.t_fact,
           DocTipo: tipoDocCliente,
           DocNro: nroDocCliente,
+          CondicionIVAReceptorId: condIvaCliente,
           CbteFch: moment(body.fecha, 'YYYY-MM-DD').format('YYYYMMDD'),
           ImpTotal: roundNumber(productsList.totalFact),
           MonCotiz: 1,
@@ -478,6 +477,23 @@ const getDocTipoCliente = (tipoDoc: number | boolean): DocTipos => {
   return DocTipos['Sin identificar'];
 };
 
+const getCondIvaCliente = (
+  body: dataFact,
+  clienteData: IClientes[],
+): number => {
+  const condIvaInformada = Number(body.cond_iva);
+
+  if (condIvaInformada > 0) {
+    return condIvaInformada;
+  }
+
+  if (clienteData.length > 0) {
+    return Number(clienteData[0].cond_iva);
+  }
+
+  return condFiscalIva['Consumidor Final'];
+};
+
 interface IfactCalc {
   listaProd: Array<IDetFactura>;
   totalFact: number;
@@ -503,5 +519,6 @@ interface dataFact {
   variosPagos: IFormasPago[];
   t_fact: number;
   cliente_id?: number;
+  cond_iva?: number;
 }
 export = factuMiddel;

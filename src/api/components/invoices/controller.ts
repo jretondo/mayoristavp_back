@@ -1812,6 +1812,7 @@ export = (injectedStore: typeof StoreType) => {
       CbteTipo: factura.t_fact,
       DocTipo: factura.tipo_doc_cliente,
       DocNro: factura.tipo_doc_cliente === 99 ? 0 : factura.n_doc_cliente,
+      CondicionIVAReceptorId: factura.cond_iva_cliente,
       CbteFch: moment(factura.fecha, 'YYYY-MM-DD').format('YYYYMMDD'),
       ImpTotal: totalFact,
       MonCotiz: 1,
