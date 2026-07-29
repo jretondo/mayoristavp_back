@@ -11,7 +11,13 @@ import {
 import { Tables, Columns } from '../../../enums/EtablesDB';
 import StoreType from '../../../store/mysql';
 import getPages from '../../../utils/getPages';
-import { AfipClass, CbteTipos } from '../../../utils/facturacion/AfipClass';
+import {
+  AfipClass,
+  AlicuotasIva,
+  CbteTipos,
+  Conceptos,
+  perIvaAlicuotas,
+} from '../../../utils/facturacion/AfipClass';
 import ptosVtaController from '../ptosVta';
 import { Ipages, IWhereParams, IJoin } from 'interfaces/Ifunctions';
 import { IClientes, IDetFactura, IFactura, IUser } from 'interfaces/Itables';
@@ -1080,6 +1086,926 @@ export = (injectedStore: typeof StoreType) => {
     return await store.insert(Tables.CATEGORIA_PAGO, { categoria });
   };
 
+  const repararRefacturacionIva = async (
+    originalId: number,
+    ncErroneaId: number,
+    facturaNuevaId: number,
+    fecha: string,
+    user: IUser,
+    confirm: boolean,
+  ) => {
+    const preview = await prepararReparacionRefacturacionIva(
+      originalId,
+      ncErroneaId,
+      facturaNuevaId,
+      fecha,
+      user,
+    );
+
+    if (!confirm) {
+      return {
+        dryRun: true,
+        ...preview.resumen,
+      };
+    }
+
+    const notaDebitoFiscal = await emitirAfip(
+      preview.pvData,
+      preview.ndFact,
+      preview.ndFiscal,
+    );
+    preview.ndFact.cbte = notaDebitoFiscal.CbteDesde;
+
+    const ndInsert = await persistirFacturaBatch(
+      preview.pvData,
+      preview.ndFact,
+      preview.ndDetails,
+      notaDebitoFiscal,
+      preview.ndPagos,
+    );
+
+    const ncCorrectaFiscal = await emitirAfip(
+      preview.pvData,
+      preview.ncCorrectaFact,
+      preview.ncCorrectaFiscal,
+    );
+    preview.ncCorrectaFact.cbte = ncCorrectaFiscal.CbteDesde;
+
+    const ncCorrectaInsert = await persistirFacturaBatch(
+      preview.pvData,
+      preview.ncCorrectaFact,
+      preview.ncCorrectaDetails,
+      ncCorrectaFiscal,
+      preview.ncCorrectaPagos,
+    );
+
+    await store.update(
+      Tables.FACTURAS,
+      { id_fact_asoc: ndInsert.factId },
+      ncErroneaId,
+    );
+    await store.update(
+      Tables.FACTURAS,
+      { id_fact_asoc: ncCorrectaInsert.factId },
+      originalId,
+    );
+
+    return {
+      dryRun: false,
+      notaDebito: {
+        id: ndInsert.factId,
+        cbte: preview.ndFact.cbte,
+        cae: preview.ndFact.cae,
+        total: preview.ndFact.total_fact,
+        total_neto: preview.ndFact.total_neto,
+        total_iva: preview.ndFact.total_iva,
+      },
+      notaCreditoCorrecta: {
+        id: ncCorrectaInsert.factId,
+        cbte: preview.ncCorrectaFact.cbte,
+        cae: preview.ncCorrectaFact.cae,
+        total: preview.ncCorrectaFact.total_fact,
+        total_neto: preview.ncCorrectaFact.total_neto,
+        total_iva: preview.ncCorrectaFact.total_iva,
+      },
+    };
+  };
+
+  const prepararReparacionRefacturacionIva = async (
+    originalId: number,
+    ncErroneaId: number,
+    facturaNuevaId: number,
+    fecha: string,
+    user: IUser,
+  ) => {
+    const fechaComprobante = fecha || moment().format('YYYY-MM-DD');
+    const original = (await get(originalId))[0];
+    const ncErronea = (await get(ncErroneaId))[0];
+    const facturaNueva = (await get(facturaNuevaId))[0];
+
+    if (!original) {
+      throw new Error(`Factura original no encontrada: ${originalId}`);
+    }
+    if (!ncErronea) {
+      throw new Error(`Nota de credito erronea no encontrada: ${ncErroneaId}`);
+    }
+    if (!facturaNueva) {
+      throw new Error(`Factura nueva no encontrada: ${facturaNuevaId}`);
+    }
+    if (!original.fiscal || !ncErronea.fiscal || !facturaNueva.fiscal) {
+      throw new Error('Los tres comprobantes deben ser fiscales');
+    }
+    if (original.nota_cred) {
+      throw new Error('El comprobante original no puede ser una nota de credito');
+    }
+    if (!ncErronea.nota_cred) {
+      throw new Error('El comprobante a neutralizar debe ser una nota de credito');
+    }
+    if (Number(ncErronea.id_fact_asoc) !== Number(original.id)) {
+      throw new Error('La NC erronea no esta asociada a la factura original indicada');
+    }
+    if (Number(facturaNueva.id) === Number(original.id)) {
+      throw new Error('La factura nueva debe ser distinta de la original');
+    }
+    if (
+      roundNumber(Math.abs(Number(facturaNueva.total_fact) || 0)) !==
+      roundNumber(Math.abs(Number(original.total_fact) || 0))
+    ) {
+      throw new Error('La factura nueva no tiene el mismo total que la original');
+    }
+
+    const pvData: Array<INewPV> = await ptosVtaController.get(original.pv_id);
+    const ncErroneaDetails = await getDetails(ncErroneaId);
+    const originalDetails = await getDetails(originalId);
+    const pagosOriginal = await getFormasPago(originalId);
+    const pagosNcErronea = await getFormasPago(ncErroneaId);
+
+    const descuentoNcErronea = getDescuentoPer(ncErronea, ncErroneaDetails);
+    const descuentoOriginal = getDescuentoPer(original, originalDetails);
+
+    const ndDetails = construirDetallesNotaDebito(ncErroneaDetails);
+    const ncCorrectaDetails = construirDetallesNotaCredito(originalDetails);
+
+    const ndFact = copiarFacturaBase(ncErronea, fechaComprobante, user, {
+      letra: getLetraNotaDebito(ncErronea.t_fact),
+      t_fact: getTipoNotaDebito(ncErronea.t_fact),
+      nota_cred: false,
+      id_fact_asoc: ncErronea.id || 0,
+      total_fact: Math.abs(Number(ncErronea.total_fact) || 0),
+      total_neto: Math.abs(Number(ncErronea.total_neto) || 0),
+      total_iva: Math.abs(Number(ncErronea.total_iva) || 0),
+      total_compra: Math.abs(Number(ncErronea.total_compra) || 0),
+      descuento: Math.abs(Number(ncErronea.descuento) || 0),
+    });
+    const ncCorrectaFact = copiarFacturaBase(original, fechaComprobante, user, {
+      letra: getLetraNotaCredito(original.t_fact),
+      t_fact: getTipoNotaCredito(original.t_fact),
+      nota_cred: true,
+      id_fact_asoc: original.id || 0,
+      total_fact: -Math.abs(Number(original.total_fact) || 0),
+      total_neto: -Math.abs(Number(original.total_neto) || 0),
+      total_iva: -Math.abs(Number(original.total_iva) || 0),
+      total_compra: -Math.abs(Number(original.total_compra) || 0),
+      descuento: Math.abs(Number(original.descuento) || 0),
+    });
+
+    const ndFiscal = construirDataFiscal(
+      ndFact,
+      ndDetails,
+      descuentoNcErronea,
+      debeDiscriminarIva(ndFact),
+      {
+        Tipo: ncErronea.t_fact,
+        PtoVta: ncErronea.pv,
+        Nro: ncErronea.cbte,
+        Cuit: ncErronea.n_doc_cliente,
+      },
+    );
+    const ncCorrectaFiscal = construirDataFiscal(
+      ncCorrectaFact,
+      ncCorrectaDetails,
+      descuentoOriginal,
+      debeDiscriminarIva(ncCorrectaFact),
+      {
+        Tipo: original.t_fact,
+        PtoVta: original.pv,
+        Nro: original.cbte,
+        Cuit: original.n_doc_cliente,
+      },
+    );
+
+    return {
+      pvData: pvData[0],
+      ndFact,
+      ndDetails,
+      ndFiscal,
+      ndPagos:
+        pagosNcErronea.length > 0
+          ? copiarPagos(pagosNcErronea)
+          : copiarPagos(pagosOriginal),
+      ncCorrectaFact,
+      ncCorrectaDetails,
+      ncCorrectaFiscal,
+      ncCorrectaPagos: invertirPagos(pagosOriginal),
+      resumen: {
+        original: resumenComprobante(original),
+        ncErronea: resumenComprobante(ncErronea),
+        facturaNueva: resumenComprobante(facturaNueva),
+        notaDebitoAEmitir: {
+          tipo: ndFact.t_fact,
+          total: ndFact.total_fact,
+          total_neto: ndFact.total_neto,
+          total_iva: ndFact.total_iva,
+          dataFiscal: ndFiscal,
+        },
+        notaCreditoCorrectaAEmitir: {
+          tipo: ncCorrectaFact.t_fact,
+          total: ncCorrectaFact.total_fact,
+          total_neto: ncCorrectaFact.total_neto,
+          total_iva: ncCorrectaFact.total_iva,
+          dataFiscal: ncCorrectaFiscal,
+        },
+      },
+    };
+  };
+
+  const refacturarIvaBatch = async (
+    ids: number[],
+    fecha: string,
+    user: IUser,
+    confirm: boolean,
+  ) => {
+    if (!Array.isArray(ids) || ids.length === 0) {
+      throw new Error('Debe enviar al menos una factura para refacturar');
+    }
+
+    const results: Array<any> = [];
+
+    for (const id of ids) {
+      try {
+        const preview = await prepararRefacturacionIva(id, fecha, user);
+
+        if (!confirm) {
+          results.push({
+            id,
+            dryRun: true,
+            ...preview.resumen,
+            warnings: preview.warnings,
+          });
+          continue;
+        }
+
+        const notaCreditoFiscal = await emitirAfip(
+          preview.pvData,
+          preview.ncFact,
+          preview.ncFiscal,
+        );
+        preview.ncFact.cbte = notaCreditoFiscal.CbteDesde;
+
+        const ncInsert = await persistirFacturaBatch(
+          preview.pvData,
+          preview.ncFact,
+          preview.ncDetails,
+          notaCreditoFiscal,
+          preview.ncPagos,
+        );
+
+        const nuevaFiscal = await emitirAfip(
+          preview.pvData,
+          preview.nuevaFact,
+          preview.nuevaFiscal,
+        );
+        preview.nuevaFact.cbte = nuevaFiscal.CbteDesde;
+
+        const nuevaInsert = await persistirFacturaBatch(
+          preview.pvData,
+          preview.nuevaFact,
+          preview.nuevaDetails,
+          nuevaFiscal,
+          preview.nuevaPagos,
+        );
+
+        await store.update(
+          Tables.FACTURAS,
+          { id_fact_asoc: ncInsert.factId },
+          id,
+        );
+
+        results.push({
+          id,
+          dryRun: false,
+          notaCredito: {
+            id: ncInsert.factId,
+            cbte: preview.ncFact.cbte,
+            cae: preview.ncFact.cae,
+            total: preview.ncFact.total_fact,
+          },
+          facturaNueva: {
+            id: nuevaInsert.factId,
+            cbte: preview.nuevaFact.cbte,
+            cae: preview.nuevaFact.cae,
+            total: preview.nuevaFact.total_fact,
+            total_neto: preview.nuevaFact.total_neto,
+            total_iva: preview.nuevaFact.total_iva,
+          },
+          warnings: preview.warnings,
+        });
+      } catch (error: any) {
+        results.push({
+          id,
+          error: error?.message || String(error),
+        });
+
+        if (confirm) {
+          break;
+        }
+      }
+    }
+
+    return {
+      confirm,
+      results,
+    };
+  };
+
+  const prepararRefacturacionIva = async (
+    id: number,
+    fecha: string,
+    user: IUser,
+  ) => {
+    console.log('prepararRefacturacionIva id :>> ', id);
+    const fechaComprobante = fecha || moment().format('YYYY-MM-DD');
+    const dataFact: Array<IFactura> = await get(id);
+    if (!dataFact[0]) {
+      throw new Error(`Factura no encontrada: ${id}`);
+    }
+
+    const original = dataFact[0];
+    if (!original.fiscal) {
+      throw new Error('Solo se pueden refacturar comprobantes fiscales');
+    }
+
+    if (original.nota_cred) {
+      throw new Error('No se puede refacturar una nota de credito');
+    }
+
+    if (Number(original.id_fact_asoc) !== 0) {
+      throw new Error('La factura ya tiene un comprobante asociado');
+    }
+
+    const originalDetails = await getDetails(id);
+    const pvData: Array<INewPV> = await ptosVtaController.get(original.pv_id);
+    const pagos = await getFormasPago(id);
+    const warnings: string[] = [];
+    const discriminaIva = debeDiscriminarIva(original);
+
+    const ncDetails = construirDetallesNotaCredito(originalDetails);
+    const nuevaDetails = await construirDetallesRefacturados(
+      originalDetails,
+      discriminaIva,
+    );
+    const descuentoPer = getDescuentoPer(original, originalDetails);
+
+    const nuevaTotals = calcularTotalesConDescuento(
+      nuevaDetails,
+      descuentoPer,
+      Math.abs(Number(original.total_fact) || 0),
+    );
+
+    const ncTipo = getTipoNotaCredito(original.t_fact);
+    const ncFact = copiarFacturaBase(original, fechaComprobante, user, {
+      letra: getLetraNotaCredito(original.t_fact),
+      t_fact: ncTipo,
+      nota_cred: true,
+      id_fact_asoc: original.id || 0,
+      total_fact: -Math.abs(Number(original.total_fact) || 0),
+      total_neto: -Math.abs(Number(original.total_neto) || 0),
+      total_iva: -Math.abs(Number(original.total_iva) || 0),
+      total_compra: -Math.abs(Number(original.total_compra) || 0),
+      descuento: Math.abs(Number(original.descuento) || 0),
+    });
+
+    const nuevaFact = copiarFacturaBase(original, fechaComprobante, user, {
+      letra: original.letra,
+      t_fact: original.t_fact,
+      nota_cred: false,
+      id_fact_asoc: 0,
+      total_fact: Math.abs(Number(original.total_fact) || 0),
+      total_neto: nuevaTotals.totalNeto,
+      total_iva: nuevaTotals.totalIva,
+      total_compra: Math.abs(Number(original.total_compra) || 0),
+      descuento: Math.abs(Number(original.descuento) || 0),
+    });
+
+    const ncFiscal = construirDataFiscal(
+      ncFact,
+      ncDetails,
+      descuentoPer,
+      discriminaIva,
+      {
+        Tipo: original.t_fact,
+        PtoVta: original.pv,
+        Nro: original.cbte,
+        Cuit: original.n_doc_cliente,
+      },
+    );
+    const nuevaFiscal = construirDataFiscal(
+      nuevaFact,
+      nuevaDetails,
+      descuentoPer,
+      discriminaIva,
+    );
+
+    return {
+      pvData: pvData[0],
+      ncFact,
+      ncDetails,
+      ncFiscal,
+      ncPagos: invertirPagos(pagos),
+      nuevaFact,
+      nuevaDetails,
+      nuevaFiscal,
+      nuevaPagos: copiarPagos(pagos),
+      warnings,
+      resumen: {
+        original: {
+          id: original.id,
+          cbte: original.cbte,
+          tipo: original.t_fact,
+          total: original.total_fact,
+          total_neto: original.total_neto,
+          total_iva: original.total_iva,
+        },
+        notaCredito: {
+          tipo: ncFact.t_fact,
+          total: ncFact.total_fact,
+          total_neto: ncFact.total_neto,
+          total_iva: ncFact.total_iva,
+        },
+        facturaNueva: {
+          tipo: nuevaFact.t_fact,
+          total: nuevaFact.total_fact,
+          total_neto: nuevaFact.total_neto,
+          total_iva: nuevaFact.total_iva,
+        },
+      },
+    };
+  };
+
+  const persistirFacturaBatch = async (
+    pvData: INewPV,
+    factura: IFactura,
+    detalles: IDetFactura[],
+    factFiscal: any,
+    pagos: IFormasPago[],
+  ) => {
+    const resultInsert = await insertFact(
+      pvData.id || 0,
+      factura,
+      detalles,
+      factFiscal,
+    );
+    const factId = resultInsert.msg.factId;
+
+    await newmovCtaCte(
+      factura.forma_pago,
+      factura.total_fact,
+      factura.n_doc_cliente,
+      factId,
+    );
+
+    if (Number(factura.forma_pago) === MetodosPago.varios) {
+      for (const item of pagos) {
+        if (Number(item.tipo) === MetodosPago.efectivo) {
+          const saldoAnterior = await store.get(
+            Tables.PUNTOS_VENTA,
+            pvData.id || 0,
+          );
+          const saldoActual =
+            Number(saldoAnterior[0].saldo_efvo || 0) + Number(item.importe);
+          await store.update(
+            Tables.PUNTOS_VENTA,
+            { saldo_efvo: saldoActual },
+            pvData.id || 0,
+          );
+        }
+
+        await store.insert(Tables.FORMAS_PAGO, {
+          id_fact: factId,
+          tipo: item.tipo,
+          importe: item.importe,
+          tipo_txt: item.tipo_txt,
+          fecha_emision: item.fecha_emision,
+          fecha_vencimiento: item.fecha_vencimiento,
+          banco: item.banco,
+          nro_cheque: item.nro_cheque,
+          notas: item.notas,
+        });
+
+        if (Number(item.tipo) === MetodosPago.ctaCte) {
+          await newmovCtaCte(
+            item.tipo,
+            item.importe,
+            factura.n_doc_cliente,
+            factId,
+          );
+        }
+      }
+    }
+
+    return {
+      factId,
+    };
+  };
+
+  const emitirAfip = async (
+    pvData: INewPV,
+    factura: IFactura,
+    dataFiscal: any,
+  ) => {
+    let certDir = 'drop_test.crt';
+    let keyDir = 'drop.key';
+    let entornoAlt = false;
+
+    if (process.env.ENTORNO === 'PROD') {
+      certDir = pvData.cert_file || 'drop_test.crt';
+      keyDir = pvData.key_file || 'drop.key';
+      entornoAlt = true;
+    }
+
+    const afip = new AfipClass(
+      factura.cuit_origen,
+      certDir,
+      keyDir,
+      entornoAlt,
+    );
+    const data = await afip.newFact(dataFiscal);
+    if (Number(data.status) !== 200) {
+      throw new Error(`AFIP rechazo el comprobante: ${data.data}`);
+    }
+
+    return data.data;
+  };
+
+  const copiarFacturaBase = (
+    original: IFactura,
+    fecha: string,
+    user: IUser,
+    cambios: Partial<IFactura>,
+  ): IFactura => {
+    return {
+      fecha: fecha as any,
+      pv: original.pv,
+      cbte: 0,
+      letra: cambios.letra || original.letra,
+      t_fact: Number(cambios.t_fact || original.t_fact),
+      cuit_origen: original.cuit_origen,
+      iibb_origen: original.iibb_origen,
+      ini_act_origen: original.ini_act_origen,
+      direccion_origen: original.direccion_origen,
+      raz_soc_origen: original.raz_soc_origen,
+      cond_iva_origen: original.cond_iva_origen,
+      tipo_doc_cliente: original.tipo_doc_cliente || 99,
+      n_doc_cliente: original.n_doc_cliente || 0,
+      cond_iva_cliente: original.cond_iva_cliente,
+      email_cliente: '',
+      nota_cred: Boolean(cambios.nota_cred),
+      fiscal: original.fiscal,
+      raz_soc_cliente: original.raz_soc_cliente || '',
+      user_id: user.id || original.user_id || 0,
+      seller_name: `${user.nombre} ${user.apellido}`,
+      total_fact: roundNumber(Number(cambios.total_fact) || 0),
+      total_iva: roundNumber(Number(cambios.total_iva) || 0),
+      total_neto: roundNumber(Number(cambios.total_neto) || 0),
+      total_compra: roundNumber(Number(cambios.total_compra) || 0),
+      forma_pago: original.forma_pago,
+      pv_id: original.pv_id,
+      id_fact_asoc: Number(cambios.id_fact_asoc) || 0,
+      descuento: roundNumber(Number(cambios.descuento) || 0),
+      direccion_entrega: original.direccion_entrega || '',
+      telefono: original.telefono || '',
+      localidad: original.localidad || '',
+      provincia: original.provincia || '',
+      cat_pago: original.cat_pago || '',
+    };
+  };
+
+  const construirDetallesRefacturados = async (
+    detalles: IDetFactura[],
+    discriminaIva: boolean,
+  ): Promise<IDetFactura[]> => {
+    const nuevosDetalles: IDetFactura[] = [];
+
+    for (const item of detalles) {
+      const producto = await store.get(Tables.PRODUCTS_PRINCIPAL, item.id_prod);
+      if (!producto[0]) {
+        throw new Error(`Producto no encontrado: ${item.id_prod}`);
+      }
+
+      const ivaPorcentaje = discriminaIva ? Number(producto[0].iva) || 0 : 0;
+      const totalProd = Math.abs(Number(item.total_prod) || 0);
+      const totalNeto =
+        discriminaIva && ivaPorcentaje > 0
+          ? totalProd / (1 + ivaPorcentaje / 100)
+          : totalProd;
+      const totalIva = discriminaIva ? totalProd - totalNeto : 0;
+
+      nuevosDetalles.push({
+        ...item,
+        id: undefined,
+        fact_id: undefined,
+        cant_anulada: 0,
+        total_prod: roundNumber(totalProd),
+        total_neto: roundNumber(totalNeto),
+        total_iva: roundNumber(totalIva),
+        total_costo: Math.abs(Number(item.total_costo) || 0),
+        precio_ind: Math.abs(Number(item.precio_ind) || 0),
+        alicuota_id:
+          discriminaIva && ivaPorcentaje > 0 ? getAlicuotaId(ivaPorcentaje) : 0,
+      });
+    }
+
+    return nuevosDetalles;
+  };
+
+  const construirDetallesNotaCredito = (
+    detalles: IDetFactura[],
+  ): IDetFactura[] => {
+    return detalles.map((item) => ({
+      ...item,
+      id: undefined,
+      fact_id: undefined,
+      cant_anulada: 0,
+      total_prod: -roundNumber(Math.abs(Number(item.total_prod) || 0)),
+      total_neto: -roundNumber(Math.abs(Number(item.total_neto) || 0)),
+      total_iva: -roundNumber(Math.abs(Number(item.total_iva) || 0)),
+      total_costo: -roundNumber(Math.abs(Number(item.total_costo) || 0)),
+      precio_ind: -roundNumber(Math.abs(Number(item.precio_ind) || 0)),
+      alicuota_id: item.alicuota_id,
+    }));
+  };
+
+  const construirDetallesNotaDebito = (
+    detalles: IDetFactura[],
+  ): IDetFactura[] => {
+    return detalles.map((item) => ({
+      ...item,
+      id: undefined,
+      fact_id: undefined,
+      cant_anulada: 0,
+      total_prod: roundNumber(Math.abs(Number(item.total_prod) || 0)),
+      total_neto: roundNumber(Math.abs(Number(item.total_neto) || 0)),
+      total_iva: roundNumber(Math.abs(Number(item.total_iva) || 0)),
+      total_costo: roundNumber(Math.abs(Number(item.total_costo) || 0)),
+      precio_ind: roundNumber(Math.abs(Number(item.precio_ind) || 0)),
+      alicuota_id: item.alicuota_id,
+    }));
+  };
+
+  const calcularTotalesConDescuento = (
+    detalles: IDetFactura[],
+    descuentoPer: number,
+    totalForzado?: number,
+  ) => {
+    const totalNetoSinDesc = detalles.reduce(
+      (acc, item) => acc + Math.abs(Number(item.total_neto) || 0),
+      0,
+    );
+    const totalIvaSinDesc = detalles.reduce(
+      (acc, item) => acc + Math.abs(Number(item.total_iva) || 0),
+      0,
+    );
+    const totalFact =
+      totalForzado !== undefined
+        ? roundNumber(totalForzado)
+        : roundNumber(
+            detalles.reduce(
+              (acc, item) => acc + Math.abs(Number(item.total_prod) || 0),
+              0,
+            ) *
+              (1 - descuentoPer / 100),
+          );
+    let totalNeto = roundNumber(totalNetoSinDesc * (1 - descuentoPer / 100));
+    let totalIva = roundNumber(totalIvaSinDesc * (1 - descuentoPer / 100));
+
+    if (totalIva > 0) {
+      totalIva = roundNumber(totalIva + (totalFact - totalNeto - totalIva));
+    } else {
+      totalNeto = totalFact;
+    }
+
+    return {
+      totalFact,
+      totalNeto,
+      totalIva,
+    };
+  };
+
+  const construirDataFiscal = (
+    factura: IFactura,
+    detalles: IDetFactura[],
+    descuentoPer: number,
+    discriminaIva: boolean,
+    cbteAsoc?: {
+      Tipo: number;
+      PtoVta: number;
+      Nro: number;
+      Cuit: number;
+    },
+  ) => {
+    const requiereAlicIva = debeInformarIvaAfip(factura);
+    const totalFact = Math.abs(Number(factura.total_fact) || 0);
+    const totalIva = Math.abs(Number(factura.total_iva) || 0);
+    const informaIva = requiereAlicIva && totalIva > 0;
+    const importeNoGravado = requiereAlicIva && totalIva === 0;
+    const ivaList = informaIva ? listaIvaSync(detalles, descuentoPer) : [];
+
+    if (informaIva && ivaList.length === 0) {
+      throw new Error(
+        `El comprobante ${factura.t_fact} requiere AlicIva pero no se pudo calcular ninguna alicuota.`,
+      );
+    }
+
+    const dataFiscal: any = {
+      CantReg: 1,
+      PtoVta: factura.pv,
+      CbteTipo: factura.t_fact,
+      DocTipo: factura.tipo_doc_cliente,
+      DocNro: factura.tipo_doc_cliente === 99 ? 0 : factura.n_doc_cliente,
+      CbteFch: moment(factura.fecha, 'YYYY-MM-DD').format('YYYYMMDD'),
+      ImpTotal: totalFact,
+      MonCotiz: 1,
+      MonId: 'PES',
+      Concepto: Conceptos.Productos,
+      ImpTotConc: importeNoGravado ? totalFact : 0,
+      ImpNeto: importeNoGravado ? 0 : Math.abs(factura.total_neto),
+      ImpOpEx: 0,
+      ImpIVA: informaIva ? totalIva : 0,
+      ImpTrib: 0,
+      ...(informaIva ? { Iva: ivaList } : {}),
+      ...(cbteAsoc ? { CbtesAsoc: [cbteAsoc] } : {}),
+    };
+
+    return dataFiscal;
+  };
+
+  const listaIvaSync = (detalles: IDetFactura[], descuentoPer: number) => {
+    const grouped = new Map<
+      number,
+      { Id: AlicuotasIva; BaseImp: number; Importe: number }
+    >();
+
+    detalles.forEach((item) => {
+      if (Math.abs(Number(item.total_iva) || 0) === 0) {
+        return;
+      }
+
+      const alicuota = perIvaAlicuotas.find(
+        (iva) => Number(iva.id) === Number(item.alicuota_id),
+      );
+      if (!alicuota) {
+        throw new Error(`Alicuota de IVA no valida: ${item.alicuota_id}`);
+      }
+
+      const id = alicuota.id as AlicuotasIva;
+      const current = grouped.get(id) || { Id: id, BaseImp: 0, Importe: 0 };
+      current.BaseImp +=
+        Math.abs(Number(item.total_neto) || 0) * (1 - descuentoPer / 100);
+      current.Importe +=
+        Math.abs(Number(item.total_iva) || 0) * (1 - descuentoPer / 100);
+      grouped.set(id, current);
+    });
+
+    return Array.from(grouped.values()).map((item) => ({
+      Id: item.Id,
+      BaseImp: roundNumber(item.BaseImp),
+      Importe: roundNumber(item.Importe),
+    }));
+  };
+
+  const copiarPagos = (pagos: IFormasPago[]) => {
+    return pagos.map((item) => ({
+      ...item,
+      id: undefined,
+      id_fact: 0,
+      importe: Math.abs(Number(item.importe) || 0),
+    }));
+  };
+
+  const invertirPagos = (pagos: IFormasPago[]) => {
+    return pagos.map((item) => ({
+      ...item,
+      id: undefined,
+      id_fact: 0,
+      importe: -Math.abs(Number(item.importe) || 0),
+    }));
+  };
+
+  const debeDiscriminarIva = (factura: IFactura) => {
+    return (
+      Number(factura.cond_iva_origen) === 1 && debeInformarIvaAfip(factura)
+    );
+  };
+
+  const debeInformarIvaAfip = (factura: IFactura) => {
+    return [
+      CbteTipos['Factura A'],
+      CbteTipos['Nota de Débito A'],
+      CbteTipos['Nota de Crédito A'],
+      CbteTipos['Factura B'],
+      CbteTipos['Nota de Débito B'],
+      CbteTipos['Nota de Crédito B'],
+      CbteTipos['Factura M'],
+      CbteTipos['Nota de Débito M'],
+      CbteTipos['Nota de Crédito M'],
+    ].includes(Number(factura.t_fact));
+  };
+
+  const getDescuentoPer = (factura: IFactura, detalles: IDetFactura[]) => {
+    const totalDetalles = detalles.reduce(
+      (acc, item) => acc + Math.abs(Number(item.total_prod) || 0),
+      0,
+    );
+    const descuento = Math.abs(Number(factura.descuento) || 0);
+
+    return totalDetalles > 0 ? (descuento / totalDetalles) * 100 : 0;
+  };
+
+  const getTipoNotaCredito = (tipoFact: number) => {
+    switch (Number(tipoFact)) {
+      case CbteTipos['Factura A']:
+        return CbteTipos['Nota de Crédito A'];
+      case CbteTipos['Factura B']:
+        return CbteTipos['Nota de Crédito B'];
+      case CbteTipos['Factura C']:
+        return CbteTipos['Nota de Crédito C'];
+      case CbteTipos['Factura M']:
+        return CbteTipos['Nota de Crédito M'];
+      default:
+        throw new Error(`Tipo de factura no soportado: ${tipoFact}`);
+    }
+  };
+
+  const getTipoNotaDebito = (tipoFact: number) => {
+    switch (Number(tipoFact)) {
+      case CbteTipos['Nota de Crédito A']:
+      case CbteTipos['Factura A']:
+        return CbteTipos['Nota de Débito A'];
+      case CbteTipos['Nota de Crédito B']:
+      case CbteTipos['Factura B']:
+        return CbteTipos['Nota de Débito B'];
+      case CbteTipos['Nota de Crédito C']:
+      case CbteTipos['Factura C']:
+        return CbteTipos['Nota de Débito C'];
+      case CbteTipos['Nota de Crédito M']:
+      case CbteTipos['Factura M']:
+        return CbteTipos['Nota de Débito M'];
+      default:
+        throw new Error(`Tipo de comprobante no soportado para nota de debito: ${tipoFact}`);
+    }
+  };
+
+  const getLetraNotaCredito = (tipoFact: number) => {
+    switch (Number(tipoFact)) {
+      case CbteTipos['Factura A']:
+        return 'NC A';
+      case CbteTipos['Factura B']:
+        return 'NC B';
+      case CbteTipos['Factura C']:
+        return 'NC C';
+      case CbteTipos['Factura M']:
+        return 'NC M';
+      default:
+        return 'DEV';
+    }
+  };
+
+  const getLetraNotaDebito = (tipoFact: number) => {
+    switch (Number(tipoFact)) {
+      case CbteTipos['Nota de Crédito A']:
+      case CbteTipos['Factura A']:
+        return 'ND A';
+      case CbteTipos['Nota de Crédito B']:
+      case CbteTipos['Factura B']:
+        return 'ND B';
+      case CbteTipos['Nota de Crédito C']:
+      case CbteTipos['Factura C']:
+        return 'ND C';
+      case CbteTipos['Nota de Crédito M']:
+      case CbteTipos['Factura M']:
+        return 'ND M';
+      default:
+        return 'ND';
+    }
+  };
+
+  const resumenComprobante = (factura: IFactura) => {
+    return {
+      id: factura.id,
+      letra: factura.letra,
+      pv: factura.pv,
+      cbte: factura.cbte,
+      tipo: factura.t_fact,
+      total: factura.total_fact,
+      total_neto: factura.total_neto,
+      total_iva: factura.total_iva,
+      id_fact_asoc: factura.id_fact_asoc,
+      cae: factura.cae,
+    };
+  };
+
+  const getAlicuotaId = (ivaAlicuota: number): number => {
+    const alicuota = perIvaAlicuotas.find(
+      (item) => Number(item.per) === Number(ivaAlicuota),
+    );
+
+    if (!alicuota) {
+      throw new Error(`Alicuota de IVA no valida: ${ivaAlicuota}`);
+    }
+
+    return alicuota.id;
+  };
+
   return {
     lastInvoice,
     list,
@@ -1103,5 +2029,7 @@ export = (injectedStore: typeof StoreType) => {
     resetTokenAfip,
     getCategoriasPago,
     newCategoreiaPago,
+    refacturarIvaBatch,
+    repararRefacturacionIva,
   };
 };

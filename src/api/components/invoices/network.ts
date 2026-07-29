@@ -335,6 +335,45 @@ const newCategoreiaPago = (req: Request, res: Response, next: NextFunction) => {
     .catch(next);
 };
 
+const refacturarIva = (req: Request, res: Response, next: NextFunction) => {
+  const confirm = req.body.confirm === true || req.body.confirm === 'true';
+  const ids = Array.isArray(req.body.ids)
+    ? req.body.ids.map((id: string | number) => Number(id))
+    : [];
+
+  Controller.refacturarIvaBatch(
+    ids,
+    req.body.fecha,
+    req.body.user,
+    confirm,
+  )
+    .then((data) => {
+      success({ req, res, message: data });
+    })
+    .catch(next);
+};
+
+const repararRefacturacionIva = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const confirm = req.body.confirm === true || req.body.confirm === 'true';
+
+  Controller.repararRefacturacionIva(
+    Number(req.body.originalId),
+    Number(req.body.ncErroneaId),
+    Number(req.body.facturaNuevaId),
+    req.body.fecha,
+    req.body.user,
+    confirm,
+  )
+    .then((data) => {
+      success({ req, res, message: data });
+    })
+    .catch(next);
+};
+
 router
   .get('/details/:id', secure(EPermissions.ventas), get)
   .get('/cajaList/:page', secure(EPermissions.ventas), cajaList)
@@ -357,6 +396,12 @@ router
   .get('/:page', secure(EPermissions.ventas), list)
   .post('/codigoDescuento', secure(EPermissions.ventas), generarCodDescuento)
   .post('/verificaCodigo', secure(EPermissions.ventas), verificaCodigoDescuento)
+  .post('/refacturarIva', secure(EPermissions.ventas), refacturarIva)
+  .post(
+    '/repararRefacturacionIva',
+    secure(EPermissions.ventas),
+    repararRefacturacionIva,
+  )
   .post(
     '/notaCred',
     secure(EPermissions.ventas),
