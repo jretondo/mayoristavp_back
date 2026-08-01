@@ -787,10 +787,6 @@ export = (injectedStore: typeof StoreType) => {
       );
     }
 
-    setTimeout(() => {
-      fs.unlinkSync(filePath);
-    }, 6000);
-
     const dataFact = {
       fileName,
       filePath,
@@ -832,10 +828,6 @@ export = (injectedStore: typeof StoreType) => {
       fileName,
       filePath,
     };
-
-    setTimeout(() => {
-      fs.unlinkSync(filePath);
-    }, 6000);
 
     return dataFact;
   };

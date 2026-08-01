@@ -6,11 +6,18 @@ import secure from '../../../auth/secure';
 import { EPermissions } from '../../../enums/EfunctMysql';
 import factuMiddel from '../../../utils/facturacion/middleFactu';
 import { fiscalMiddle } from '../../../utils/facturacion/middleFiscal';
-import { invoicePDFMiddle } from '../../../utils/facturacion/middlePDFinvoice';
+import {
+  invoiceHTMLMiddle,
+  invoicePDFMiddle,
+} from '../../../utils/facturacion/middlePDFinvoice';
 import { sendFactMiddle } from '../../../utils/facturacion/middleSendFact';
 import dataFactMiddle from '../../../utils/facturacion/middleDataFact';
 import devFactMiddle from '../../../utils/facturacion/middleDevFact';
 import factuMiddelDevPart from '../../../utils/facturacion/middleFactuDevPart';
+import { enqueueInvoicePdf } from '../../../utils/facturacion/invoicePdfQueue';
+import { zfill } from '../../../utils/cerosIzq';
+import fs from 'fs';
+import path from 'path';
 
 const list = (req: Request, res: Response, next: NextFunction) => {
   Controller.list(
@@ -76,14 +83,40 @@ const newInvoice = (req: Request, res: Response, next: NextFunction) => {
     req.body.items,
   )
     .then((dataFact) => {
-      file(
-        req,
-        res,
-        dataFact.filePath,
-        'application/pdf',
-        dataFact.fileName,
-        dataFact,
-      );
+      if (req.body.htmlOnly && req.body.invoiceHtml) {
+        enqueueInvoicePdf({
+          html: req.body.invoiceHtml,
+          filePath: dataFact.filePath,
+          fileName: dataFact.fileName,
+          email: {
+            factura: req.body.newFact,
+            formaPago: req.body.formapagoStr,
+          },
+        });
+
+        success({
+          req,
+          res,
+          status: 200,
+          message: {
+            html: req.body.invoiceHtml,
+            fileName: dataFact.fileName,
+            filePath: dataFact.filePath,
+            pdfUrl: `/static/invoices/${encodeURIComponent(dataFact.fileName)}`,
+            pdfStatus: 'pending',
+            resultInsert: dataFact.resultInsert,
+          },
+        });
+      } else {
+        file(
+          req,
+          res,
+          dataFact.filePath,
+          'application/pdf',
+          dataFact.fileName,
+          dataFact,
+        );
+      }
     })
     .catch(next);
 };
@@ -141,6 +174,43 @@ const getDataFactPDF = (req: Request, res: Response, next: NextFunction) => {
       })
       .catch(next);
   }
+};
+
+const cachedInvoicePDF = (req: Request, res: Response, next: NextFunction) => {
+  if (req.query.sendEmail || req.query.noPrice) {
+    return next();
+  }
+
+  Controller.get(Number(req.params.id))
+    .then((data) => {
+      if (!data || !data[0]) {
+        return next();
+      }
+
+      const factura = data[0];
+      const fileName = `${factura.letra} ${zfill(factura.pv, 5)}-${zfill(
+        factura.cbte,
+        8,
+      )}.pdf`;
+      const filePath = path.join('public', 'invoices', fileName);
+
+      if (!fs.existsSync(filePath)) {
+        return next();
+      }
+
+      const ageMs = Date.now() - fs.statSync(filePath).mtimeMs;
+      const maxAgeMs = 48 * 60 * 60 * 1000;
+      if (ageMs > maxAgeMs) {
+        return next();
+      }
+
+      file(req, res, filePath, 'application/pdf', fileName, {
+        fileName,
+        filePath,
+        cached: true,
+      });
+    })
+    .catch(next);
 };
 
 const getFiscalDataInvoice = (
@@ -382,6 +452,7 @@ router
   .get(
     '/factDataPDF/:id',
     secure(EPermissions.ventas),
+    cachedInvoicePDF,
     dataFactMiddle(),
     invoicePDFMiddle(),
     sendFactMiddle(),
@@ -435,8 +506,7 @@ router
     secure(EPermissions.ventas),
     factuMiddel(),
     fiscalMiddle(),
-    invoicePDFMiddle(),
-    sendFactMiddle(),
+    invoiceHTMLMiddle(),
     newInvoice,
   )
   .post('/categoriasPago', secure(EPermissions.ventas), newCategoreiaPago)

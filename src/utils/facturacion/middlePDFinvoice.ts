@@ -20,6 +20,14 @@ import {
 } from './AfipClass';
 import puppeteer from 'puppeteer';
 
+export const invoiceHTMLMiddle = () => {
+  const middleware = (req: Request, res: Response, next: NextFunction) => {
+    req.body.htmlOnly = true;
+    invoicePDFMiddle()(req, res, next);
+  };
+  return middleware;
+};
+
 export const invoicePDFMiddle = () => {
   const middleware = async (
     req: Request,
@@ -395,26 +403,10 @@ export const invoicePDFMiddle = () => {
           req.body.filePath = filePath;
           req.body.formapagoStr = formapagoStr;
 
-          const browser = await puppeteer.launch({
-            args: ['--no-sandbox', '--disable-setuid-sandbox'],
-            executablePath:
-              process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
-          });
-          const page = await browser.newPage();
-          await page.setContent(data, { waitUntil: 'networkidle0' });
-          await page.pdf({
-            path: filePath,
-            format: 'A4',
-            landscape: false,
-            scale: 1,
-            displayHeaderFooter: false,
-
-            margin: {
-              top: '0.5cm',
-              bottom: '0.5cm',
-            },
-          });
-          await browser.close();
+          req.body.invoiceHtml = data;
+          if (!req.body.htmlOnly) {
+            await createInvoicePdfFromHtml(data, filePath);
+          }
           next();
         },
       );
@@ -439,4 +431,34 @@ const getAlicuotaPorcentaje = (alicuotaId: number): number => {
     perIvaAlicuotas.find((item) => Number(item.id) === Number(alicuotaId))
       ?.per || 0
   );
+};
+
+export const createInvoicePdfFromHtml = async (
+  html: string,
+  filePath: string,
+) => {
+  const browser = await puppeteer.launch({
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    executablePath:
+      process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
+  });
+
+  try {
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    await page.pdf({
+      path: filePath,
+      format: 'A4',
+      landscape: false,
+      scale: 1,
+      displayHeaderFooter: false,
+
+      margin: {
+        top: '0.5cm',
+        bottom: '0.5cm',
+      },
+    });
+  } finally {
+    await browser.close();
+  }
 };

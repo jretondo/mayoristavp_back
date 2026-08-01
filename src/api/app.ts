@@ -22,6 +22,7 @@ import invoices from './components/invoices/network';
 import heroSlider from './components/heroSlider/network';
 import cheques from './components/cheques/network';
 import pedidos from './components/pedidos/network';
+import { startInvoicePdfCleanup } from '../utils/facturacion/cleanupInvoicePdfs';
 
 export class App {
   app: Application;
@@ -49,6 +50,7 @@ export class App {
   }
 
   private routes() {
+    startInvoicePdfCleanup();
     this.app.use(
       '/static',
       express.static(path.join(__dirname, '..', '..', 'public')),
