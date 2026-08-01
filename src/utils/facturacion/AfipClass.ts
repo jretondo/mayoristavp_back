@@ -170,9 +170,10 @@ export class AfipClass {
                 }));
                 return response;
             } else {
+                const lastFactError = normalizeAfipError(nfact.data);
                 const response = {
                     status: resStatus.error,
-                    data: "Punto de venta o tipo de factura incorrecta."
+                    data: lastFactError || "No se pudo obtener el ultimo comprobante autorizado en AFIP."
                 }
                 console.error('[AFIP][newFact][lastFactError]', safeJson({
                     ...logContext,
@@ -487,6 +488,51 @@ const safeJson = (data: any): string => {
         );
     } catch (error) {
         return String(data);
+    }
+};
+
+const normalizeAfipError = (error: any): string => {
+    if (!error) {
+        return '';
+    }
+
+    if (typeof error === 'string') {
+        return fixMojibake(error.replace(/^Error:\s*/, ''));
+    }
+
+    if (error.message) {
+        return fixMojibake(String(error.message).replace(/^Error:\s*/, ''));
+    }
+
+    if (error.fault && error.fault.faultstring) {
+        return fixMojibake(String(error.fault.faultstring));
+    }
+
+    if (error.response && error.response.data) {
+        return normalizeAfipError(error.response.data);
+    }
+
+    if (error.details) {
+        return normalizeAfipError(error.details);
+    }
+
+    if (error.errors) {
+        return normalizeAfipError(error.errors);
+    }
+
+    return fixMojibake(safeJson(error));
+};
+
+const fixMojibake = (value: string): string => {
+    if (!/[ÃÂ]/.test(value)) {
+        return value;
+    }
+
+    try {
+        const fixed = Buffer.from(value, 'latin1').toString('utf8');
+        return fixed.indexOf('\uFFFD') === -1 ? fixed : value;
+    } catch (error) {
+        return value;
     }
 };
 

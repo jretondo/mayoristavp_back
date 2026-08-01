@@ -128,10 +128,84 @@ export const fiscalMiddle = () => {
         pvData: req.body.pvData,
         productsList: req.body.productsList,
       }));
-      next(new Error('Faltan datos o hay datos erroneos, controlelo!'));
+      next(new Error(getFiscalizacionErrorMessage(error)));
     }
   };
   return middleware;
+};
+
+const getFiscalizacionErrorMessage = (error: any): string => {
+  const extractedMessage = extractFiscalizacionError(error);
+  const message =
+    fixMojibake(extractedMessage) || 'No se pudo fiscalizar el comprobante.';
+
+  return message.startsWith('Error de fiscalizacion:')
+    ? message
+    : `Error de fiscalizacion: ${message}`;
+};
+
+const extractFiscalizacionError = (error: any): string => {
+  if (!error) {
+    return '';
+  }
+
+  if (typeof error === 'string') {
+    return fixMojibake(error);
+  }
+
+  if (error.message) {
+    return fixMojibake(String(error.message));
+  }
+
+  if (error.fault && error.fault.faultstring) {
+    return fixMojibake(String(error.fault.faultstring));
+  }
+
+  if (error.response && error.response.data) {
+    return formatFiscalizacionErrorValue(error.response.data);
+  }
+
+  if (error.details) {
+    return formatFiscalizacionErrorValue(error.details);
+  }
+
+  if (error.errors) {
+    return formatFiscalizacionErrorValue(error.errors);
+  }
+
+  return formatFiscalizacionErrorValue(error);
+};
+
+const formatFiscalizacionErrorValue = (value: any): string => {
+  if (!value) {
+    return '';
+  }
+
+  if (typeof value === 'string') {
+    return fixMojibake(value);
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => formatFiscalizacionErrorValue(item))
+      .filter((item) => item)
+      .join(' | ');
+  }
+
+  return fixMojibake(safeJson(value));
+};
+
+const fixMojibake = (value: string): string => {
+  if (!/[ÃÂ]/.test(value)) {
+    return value;
+  }
+
+  try {
+    const fixed = Buffer.from(value, 'latin1').toString('utf8');
+    return fixed.indexOf('\uFFFD') === -1 ? fixed : value;
+  } catch (error) {
+    return value;
+  }
 };
 
 const serializeError = (error: any) => {

@@ -616,9 +616,9 @@ export = (injectedStore: typeof StoreType) => {
           lastInvoice: Number(lastfact.data),
         };
       } else {
-        throw new Error(
-          'Error interno. Probablemente no sea un punto de venta válido.',
-        );
+        return {
+          lastInvoice: 0,
+        };
       }
     } else {
       let filter: IWhereParams | undefined = undefined;
@@ -1196,13 +1196,19 @@ export = (injectedStore: typeof StoreType) => {
       throw new Error('Los tres comprobantes deben ser fiscales');
     }
     if (original.nota_cred) {
-      throw new Error('El comprobante original no puede ser una nota de credito');
+      throw new Error(
+        'El comprobante original no puede ser una nota de credito',
+      );
     }
     if (!ncErronea.nota_cred) {
-      throw new Error('El comprobante a neutralizar debe ser una nota de credito');
+      throw new Error(
+        'El comprobante a neutralizar debe ser una nota de credito',
+      );
     }
     if (Number(ncErronea.id_fact_asoc) !== Number(original.id)) {
-      throw new Error('La NC erronea no esta asociada a la factura original indicada');
+      throw new Error(
+        'La NC erronea no esta asociada a la factura original indicada',
+      );
     }
     if (Number(facturaNueva.id) === Number(original.id)) {
       throw new Error('La factura nueva debe ser distinta de la original');
@@ -1211,7 +1217,9 @@ export = (injectedStore: typeof StoreType) => {
       roundNumber(Math.abs(Number(facturaNueva.total_fact) || 0)) !==
       roundNumber(Math.abs(Number(original.total_fact) || 0))
     ) {
-      throw new Error('La factura nueva no tiene el mismo total que la original');
+      throw new Error(
+        'La factura nueva no tiene el mismo total que la original',
+      );
     }
 
     const pvData: Array<INewPV> = await ptosVtaController.get(original.pv_id);
@@ -1942,7 +1950,9 @@ export = (injectedStore: typeof StoreType) => {
       case CbteTipos['Factura M']:
         return CbteTipos['Nota de Débito M'];
       default:
-        throw new Error(`Tipo de comprobante no soportado para nota de debito: ${tipoFact}`);
+        throw new Error(
+          `Tipo de comprobante no soportado para nota de debito: ${tipoFact}`,
+        );
     }
   };
 
