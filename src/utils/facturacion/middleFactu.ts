@@ -442,15 +442,12 @@ const validarTipoComprobanteFiscal = (
       CbteTipos['Factura M'],
     ];
 
-    if (clienteRecibeClaseA && !comprobantesClaseA.includes(tipoComprobante)) {
+    if (
+      !clienteRecibeClaseA &&
+      comprobantesClaseA.includes(tipoComprobante)
+    ) {
       throw new Error(
-        'Un Responsable Inscripto debe emitir Factura A o M a Responsable Inscripto o Monotributista.',
-      );
-    }
-
-    if (!clienteRecibeClaseA && tipoComprobante !== CbteTipos['Factura B']) {
-      throw new Error(
-        'Un Responsable Inscripto debe emitir Factura B a Consumidor Final, Exento u otros sujetos no inscriptos.',
+        'Un Responsable Inscripto no puede emitir Factura A o M a Consumidor Final, Exento u otros sujetos no inscriptos.',
       );
     }
 
@@ -492,6 +489,11 @@ const getCondIvaCliente = (
   }
 
   if (clienteData.length > 0) {
+    const tipoDocCliente = getDocTipoCliente(clienteData[0].cuit);
+    if (tipoDocCliente !== DocTipos['CUIT']) {
+      return condFiscalIva['Consumidor Final'];
+    }
+
     return Number(clienteData[0].cond_iva);
   }
 
