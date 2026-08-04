@@ -18,17 +18,19 @@
       <div id="logo">
         <img src="<%- logo %> ">
         <h2 class="name">
-          MAYORISTA EN LIMPIEZA
+          <%- upperCase(razSocOrigen) %>
         </h2>
         <div>
-          VP. REPRESENTACIONES
+          <%- upperCase(condIvaOrigen) %>
         </div>
         <div>
-          CHAVISACATE 2062, Bº TALLERES OESTE
+          <%- upperCase(direccionOrigen) %>
         </div>
+        <% if(emailOrigen){ %>
         <div>
-          TEL.: 3512655464
+          <%- upperCase(emailOrigen) %>
         </div>
+        <% } %>
       </div>
       <div style="position: absolute;text-align: center;width: 100%;">
         <h2 class="name" style="font-weight: bold;">ORIGINAL</h2>

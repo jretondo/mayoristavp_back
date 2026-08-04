@@ -184,11 +184,13 @@ export const invoicePDFMiddle = () => {
       let condIvaStr = '';
       let condIvaStrCliente = '';
 
-      if (pvData.cond_iva === condFiscalIva['IVA Responsable Inscripto']) {
+      const condIvaOrigen = Number(newFact.cond_iva_origen || pvData.cond_iva);
+
+      if (condIvaOrigen === condFiscalIva['IVA Responsable Inscripto']) {
         condIvaStr = 'IVA Responsable Inscripto';
-      } else if (pvData.cond_iva === condFiscalIva['IVA Sujeto Exento']) {
+      } else if (condIvaOrigen === condFiscalIva['IVA Sujeto Exento']) {
         condIvaStr = 'IVA Sujeto Exento';
-      } else if (pvData.cond_iva === condFiscalIva['Responsable Monotributo']) {
+      } else if (condIvaOrigen === condFiscalIva['Responsable Monotributo']) {
         condIvaStr = 'Responsable Monotributo';
       }
 
@@ -211,13 +213,16 @@ export const invoicePDFMiddle = () => {
       }
 
       const ptoVta = {
-        razSocOrigen: pvData.raz_soc,
-        direccionOrigen: pvData.direccion,
+        razSocOrigen: newFact.raz_soc_origen || pvData.raz_soc,
+        direccionOrigen: newFact.direccion_origen || pvData.direccion,
         condIvaOrigen: condIvaStr,
         emailOrigen: pvData.email,
-        cuitOrigen: pvData.cuit,
-        iibbOrigen: pvData.iibb,
-        iniAct: moment(pvData.ini_act, 'YYYY-MM-DD').format('DD/MM/YYYY'),
+        cuitOrigen: newFact.cuit_origen || pvData.cuit,
+        iibbOrigen: newFact.iibb_origen || pvData.iibb,
+        iniAct: moment(
+          newFact.ini_act_origen || pvData.ini_act,
+          'YYYY-MM-DD',
+        ).format('DD/MM/YYYY'),
       };
       const cliente = {
         clienteEmail: newFact.email_cliente || '',
