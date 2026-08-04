@@ -244,7 +244,11 @@ const factuMiddel = () => {
       next();
     } catch (error) {
       console.error(error);
-      next(errorSend('Faltan datos o hay datos erroneos, controlelo!'));
+      next(
+        error instanceof Error
+          ? error
+          : errorSend('Faltan datos o hay datos erroneos, controlelo!'),
+      );
     }
   };
   return middleware;
